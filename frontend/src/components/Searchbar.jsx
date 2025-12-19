@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import AxiosClient from '../AxiosClient';
 import { useNavigate } from 'react-router-dom';
 import { usePostContext } from '../contexts/PostContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 function Searchbar() {
   const [type, setType] = useState('rent');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { setPosts } = usePostContext();
+  const { t } = useLanguage();
 
   const onsubmit = (e) => {
     e.preventDefault();
@@ -37,14 +39,14 @@ function Searchbar() {
              ${type === 'buy' ? 'bg-black text-white' : 'bg-white'}`}
           onClick={() => setType('buy')}
         >
-          Buy
+          {t('search.buy')}
         </button>
         <button
           className={`px-9 py-4 border border-l-0 rounded-tr-lg 
             ${type === 'rent' ? 'bg-black text-white' : 'bg-white'}`}
           onClick={() => setType('rent')}
         >
-          Rent
+          {t('search.rent')}
         </button>
       </div>
       <div>
@@ -55,19 +57,19 @@ function Searchbar() {
         >
           <input
             type="text"
-            placeholder="Location"
+            placeholder={t('search.location')}
             className="outline-none pl-2.5 w-[200px] max-lg:w-[200px] max-xl:w-[140px] max-md:w-full max-md:p-5 max-md:border-b"
             name="location"
           />
           <input
             type="number"
-            placeholder="Min Price"
+            placeholder={t('search.minPrice')}
             className="outline-none pl-2.5 w-[200px] max-lg:w-[200px] max-xl:w-[140px] max-md:w-full max-md:p-5 max-md:border-b"
             name="min"
           />
           <input
             type="number"
-            placeholder="Max Price"
+            placeholder={t('search.maxPrice')}
             className="outline-none pl-2.5 w-[200px] max-lg:w-[200px] max-xl:w-[140px] max-md:w-full max-md:p-5 max-md:border-b"
             name="max"
           />

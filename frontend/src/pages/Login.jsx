@@ -2,9 +2,11 @@ import React, { useRef, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import AxiosClient from '../AxiosClient';
 import { useUserContext } from '../contexts/UserContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 function Login() {
   const { setUser, setToken, token } = useUserContext();
+  const { t } = useLanguage();
   const [errors, setErrors] = useState(null);
   const refEmail = useRef();
   const refPassword = useRef();
@@ -40,7 +42,7 @@ function Login() {
   return (
     <div className="flex justify-center items-center flex-1">
       <form action="" className="w-80 flex flex-col gap-4" onSubmit={onSubmit}>
-        <h3 className="font-bold text-3xl text-center">Log in</h3>
+        <h3 className="font-bold text-3xl text-center">{t('auth.login')}</h3>
         {errors && (
           <div className="bg-red-500 text-white p-3 rounded-md">
             {Object.keys(errors).map((e, i) => {
@@ -50,13 +52,13 @@ function Login() {
         )}
         <input
           type="email"
-          placeholder="Email"
+          placeholder={t('auth.email')}
           className="w-full px-3 py-5 border outline-none rounded-md"
           ref={refEmail}
         />
         <input
           type="password"
-          placeholder="Password"
+          placeholder={t('auth.password')}
           className="w-full border outline-none rounded-md px-3 py-5"
           ref={refPassword}
         />
@@ -64,10 +66,10 @@ function Login() {
           className="w-full bg-green-600 text-white px-3 py-5 rounded-md disabled:bg-[#444] disabled:cursor-none"
           disabled={loading}
         >
-          Login
+          {t('auth.login')}
         </button>
         <Link className="underline text-sm text-[#444] font-bold" to="/signup">
-          Don't you have an account
+          {t('auth.noAccount')}
         </Link>
       </form>
     </div>

@@ -4,11 +4,13 @@ import EstateCard from '../components/EstateCard';
 import Map from '../components/Map';
 import AxiosClient from '../AxiosClient';
 import { usePostContext } from '../contexts/PostContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 function ListPage() {
   const [properties, setProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const { posts } = usePostContext();
+  const { t } = useLanguage();
 
   useEffect(() => {
     AxiosClient.get('/property').then((response) => {
@@ -24,7 +26,7 @@ function ListPage() {
     >
       {loading ? (
         <div className="text-3xl text-green-600 font-bold absolute right-1/2 top-1/2">
-          Loading...
+          {t('common.loading')}
         </div>
       ) : (
         <>

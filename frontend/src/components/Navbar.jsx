@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUserContext } from '../contexts/UserContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import AxiosClient from '../AxiosClient';
 
 function Navbar() {
   const [sidebar, setSidebar] = useState(false);
   const { user } = useUserContext();
+  const { language, setLanguage, t } = useLanguage();
 
   // useEffect(() => {
   //   AxiosClient.get('/user').then(({ data }) => {
@@ -30,26 +32,26 @@ function Navbar() {
             className="hover:scale-105 transition duration-300 ease rounded-md max-md:hidden"
             to="/"
           >
-            Home
+            {t('navbar.home')}
           </Link>
           <Link
             href="#"
             className="hover:scale-105 transition duration-300 ease rounded-md max-md:hidden"
             to="/about"
           >
-            About
+            {t('navbar.about')}
           </Link>
           <Link
             href="#"
             className="hover:scale-105 transition duration-300 ease rounded-md max-md:hidden"
           >
-            Contact
+            {t('navbar.contact')}
           </Link>
           <Link
             href="#"
             className="hover:scale-105 transition duration-300 ease rounded-md max-md:hidden"
           >
-            Agents
+            {t('navbar.agents')}
           </Link>
         </div>
         <div
@@ -75,7 +77,7 @@ function Navbar() {
                 >
                   3
                 </div>
-                Profile
+                {t('navbar.profile')}
               </Link>
             </div>
           ) : (
@@ -85,17 +87,26 @@ function Navbar() {
                 className="hover:scale-105 transition duration-300 ease rounded-md max-md:hidden"
                 to="/login"
               >
-                Log in
+                {t('navbar.login')}
               </Link>
               <Link
                 href="#"
                 className="bg-yellow-300 px-4 py-2 hover:scale-105 mr-2 transition duration-300 ease rounded-md max-md:hidden"
                 to="/signup"
               >
-                Sign up
+                {t('navbar.signup')}
               </Link>
             </>
           )}
+
+          {/* Language Toggle Button */}
+          <button
+            onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition duration-300 ease max-md:mr-2"
+            title={language === 'en' ? 'Switch to Arabic' : 'التبديل إلى الإنجليزية'}
+          >
+            {language === 'en' ? 'عربي' : 'English'}
+          </button>
 
           <a href="#">
             <img
@@ -121,22 +132,22 @@ function Navbar() {
             X
           </a> */}
           <a href="" className="text-white">
-            Home
+            {t('navbar.home')}
           </a>
           <a href="" className="text-white">
-            About
+            {t('navbar.about')}
           </a>
           <a href="" className="text-white">
-            Contact
+            {t('navbar.contact')}
           </a>
           <a href="" className="text-white">
-            Agents
+            {t('navbar.agents')}
           </a>
           <a href="" className="text-white">
-            Sign in
+            {t('navbar.signIn')}
           </a>
           <a href="" className="text-white">
-            Sign up
+            {t('navbar.signup')}
           </a>
         </div>
       </nav>
