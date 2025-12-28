@@ -19,8 +19,9 @@ class UserResource extends JsonResource
             "name" => $this->name,
             "email" => $this->email,
             "avatar" => $this->avatar,
-            "role" => $this->role ?? 'tenant',
-            "status" => $this->status ?? 'active'
+            "role" => $this->role ?? 'user',
+            "status" => $this->status ?? 'active',
+            "identity_status" => $this->identity_status ?? 'none'
         ];
     }
 }

@@ -1,59 +1,61 @@
-import { createBrowserRouter } from 'react-router-dom';
-import { Layout, AuthLayout } from './components/Layout';
-import AdminLayout from './components/AdminLayout';
-import Home from './pages/Home';
-import About from './pages/About';
-import ListPage from './pages/ListPage';
-import EstateInfo from './pages/EstateInfo';
-import Profile from './pages/Profile';
-import GuestLayout from './components/GuestLayout';
-import Login from './pages/Login';
-import NotFound from './pages/NotFound';
-import Signup from './pages/Signup';
-import UpdateUser from './pages/UpdateUser';
-import AddPost from './pages/AddPost';
-import AdminDashboard from './pages/AdminDashboard';
-import UserManagement from './pages/UserManagement';
-import ApartmentManagement from './pages/ApartmentManagement';
-import RentalRequestsManagement from './pages/RentalRequestsManagement';
-import ContractManagement from './pages/ContractManagement';
-import ReviewsManagement from './pages/ReviewsManagement';
-import AdminNotifications from './pages/AdminNotifications';
-import AdminSettings from './pages/AdminSettings';
-import EstateInfoLoader from './Lib/Loaders';
+import { createBrowserRouter } from "react-router-dom";
+import { Layout, AuthLayout } from "./components/Layout";
+import AdminLayout from "./components/AdminLayout";
+import Home from "./pages/Home";
+import About from "./pages/About";
+import ListPage from "./pages/ListPage";
+import EstateInfo from "./pages/EstateInfo";
+import Profile from "./pages/Profile";
+import GuestLayout from "./components/GuestLayout";
+import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
+import Signup from "./pages/Signup";
+import UpdateUser from "./pages/UpdateUser";
+import AddPost from "./pages/AddPost";
+import AdminDashboard from "./pages/AdminDashboard";
+import UserManagement from "./pages/UserManagement";
+import ApartmentManagement from "./pages/ApartmentManagement";
+import RentalRequestsManagement from "./pages/RentalRequestsManagement";
+import ContractManagement from "./pages/ContractManagement";
+import ReviewsManagement from "./pages/ReviewsManagement";
+import AdminNotifications from "./pages/AdminNotifications";
+import AdminSettings from "./pages/AdminSettings";
+import IdentityVerification from "./pages/IdentityVerification";
+import IdentityVerificationReview from "./pages/IdentityVerificationReview";
+import EstateInfoLoader from "./Lib/Loaders";
 
 const route = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <Layout />,
     children: [
       {
-        path: '/about',
+        path: "/about",
         element: <About />,
       },
       {
-        path: '/list',
+        path: "/list",
         element: <ListPage />,
       },
       {
-        path: '/:id',
+        path: "/:id",
         element: <EstateInfo />,
         loader: EstateInfoLoader,
       },
       {
-        path: '/',
+        path: "/",
         element: <GuestLayout />,
         children: [
           {
-            path: '/',
+            path: "/",
             element: <Home />,
           },
           {
-            path: '/login',
+            path: "/login",
             element: <Login />,
           },
           {
-            path: '/signup',
+            path: "/signup",
             element: <Signup />,
           },
         ],
@@ -61,62 +63,70 @@ const route = createBrowserRouter([
     ],
   },
   {
-    path: '*',
+    path: "*",
     element: <NotFound />,
   },
   {
-    path: '/',
+    path: "/",
     element: <AuthLayout />,
     children: [
       {
-        path: '/user/profile',
+        path: "/user/profile",
         element: <Profile />,
       },
       {
-        path: '/user/profile/update',
+        path: "/user/profile/update",
         element: <UpdateUser />,
       },
       {
-        path: '/post/add',
+        path: "/post/add",
         element: <AddPost />,
+      },
+      {
+        path: "/identity-verification",
+        element: <IdentityVerification />,
       },
     ],
   },
   {
-    path: '/admin',
+    path: "/admin",
     element: <AdminLayout />,
     children: [
       {
-        path: 'dashboard',
+        path: "dashboard",
         element: <AdminDashboard />,
       },
       {
-        path: 'users',
+        path: "users",
         element: <UserManagement />,
       },
       {
-        path: 'apartments',
+        path: "apartments",
         element: <ApartmentManagement />,
       },
       {
-        path: 'rental-requests',
+        path: "rental-requests",
         element: <RentalRequestsManagement />,
       },
       {
-        path: 'contracts',
+        path: "contracts",
         element: <ContractManagement />,
       },
       {
-        path: 'reviews',
+        path: "reviews",
         element: <ReviewsManagement />,
       },
       {
-        path: 'notifications',
+        path: "notifications",
         element: <AdminNotifications />,
       },
       {
-        path: 'settings',
+        path: "settings",
         element: <AdminSettings />,
+      },
+      {
+        path: "identity-verifications",
+        element: <IdentityVerificationReview />,
       },
     ],
   },

@@ -21,7 +21,7 @@ class AuthController extends Controller
             "role" => "admin",
             "status" => "active"
         ]);
-
+        auth()->login($user);
         $token = $user->createToken("user_token")->plainTextToken;
         $userDTO = new UserResource($user);
         return response(compact("userDTO","token"),201);
@@ -34,6 +34,7 @@ class AuthController extends Controller
             return response(['message' => "User Not Found"],404);
         if(!Hash::check($data["password"],$user->password))
             return response(["message" => "password is not correct"],404);
+        auth()->login($user);
         $userDTO = new UserResource($user);
         $token = $user->createToken("user_token")->plainTextToken;
         return response(compact("userDTO","token"),200);

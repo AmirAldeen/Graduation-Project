@@ -7,13 +7,16 @@ import route from './Routes.jsx';
 import UserContextProvider from './contexts/UserContext.jsx';
 import PostContextProvider from './contexts/PostContext.jsx';
 import LanguageProvider from './contexts/LanguageContext.jsx';
+import { PopupProvider } from './contexts/PopupContext.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <LanguageProvider>
       <UserContextProvider>
         <PostContextProvider>
-          <RouterProvider router={route} />
+          <PopupProvider>
+            <RouterProvider router={route} />
+          </PopupProvider>
         </PostContextProvider>
       </UserContextProvider>
     </LanguageProvider>

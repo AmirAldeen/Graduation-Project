@@ -1,19 +1,36 @@
-import { Link, useLocation } from 'react-router-dom';
-import { useLanguage } from '../contexts/LanguageContext';
+import { Link, useLocation } from "react-router-dom";
+import { useLanguage } from "../contexts/LanguageContext";
 
 function AdminSidebar() {
   const location = useLocation();
   const { t, language, setLanguage } = useLanguage();
 
   const menuItems = [
-    { path: '/admin/dashboard', labelKey: 'admin.dashboard', icon: '📊' },
-    { path: '/admin/users', labelKey: 'admin.userManagement', icon: '👥' },
-    { path: '/admin/apartments', labelKey: 'admin.apartmentManagement', icon: '🏠' },
-    { path: '/admin/rental-requests', labelKey: 'admin.rentalRequests', icon: '📝' },
-    { path: '/admin/contracts', labelKey: 'admin.contracts', icon: '📄' },
-    { path: '/admin/reviews', labelKey: 'admin.reviews', icon: '⭐' },
-    { path: '/admin/notifications', labelKey: 'admin.notifications', icon: '🔔' },
-    { path: '/admin/settings', labelKey: 'admin.settings', icon: '⚙️' },
+    { path: "/admin/dashboard", labelKey: "admin.dashboard", icon: "📊" },
+    { path: "/admin/users", labelKey: "admin.userManagement", icon: "👥" },
+    {
+      path: "/admin/apartments",
+      labelKey: "admin.apartmentManagement",
+      icon: "🏠",
+    },
+    {
+      path: "/admin/identity-verifications",
+      labelKey: "admin.identityVerifications",
+      icon: "🆔",
+    },
+    {
+      path: "/admin/rental-requests",
+      labelKey: "admin.rentalRequests",
+      icon: "📝",
+    },
+    { path: "/admin/contracts", labelKey: "admin.contracts", icon: "📄" },
+    { path: "/admin/reviews", labelKey: "admin.reviews", icon: "⭐" },
+    {
+      path: "/admin/notifications",
+      labelKey: "admin.notifications",
+      icon: "🔔",
+    },
+    { path: "/admin/settings", labelKey: "admin.settings", icon: "⚙️" },
   ];
 
   return (
@@ -21,25 +38,27 @@ function AdminSidebar() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-[#444]">Admin Panel</h2>
       </div>
-      
+
       {/* Back to Home Button */}
       <Link
         to="/"
         className="mb-4 bg-yellow-300 hover:scale-105 px-4 py-3 rounded-md font-bold transition duration-300 ease text-[#444] flex items-center justify-center gap-2"
       >
         <span>🏠</span>
-        <span>{t('admin.backToHome')}</span>
+        <span>{t("admin.backToHome")}</span>
       </Link>
 
       {/* Language Toggle Button - Fixed Position */}
       <div className="mb-6">
         <button
-          onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+          onClick={() => setLanguage(language === "en" ? "ar" : "en")}
           className="w-full bg-yellow-300 hover:scale-105 px-4 py-3 rounded-md font-bold transition duration-300 ease text-[#444] flex items-center justify-center gap-2"
-          title={language === 'en' ? 'Switch to Arabic' : 'التبديل إلى الإنجليزية'}
+          title={
+            language === "en" ? "Switch to Arabic" : "التبديل إلى الإنجليزية"
+          }
         >
           <span>🌐</span>
-          <span>{language === 'en' ? 'عربي' : 'English'}</span>
+          <span>{language === "en" ? "عربي" : "English"}</span>
         </button>
       </div>
 
@@ -52,8 +71,8 @@ function AdminSidebar() {
               to={item.path}
               className={`flex items-center gap-3 px-4 py-3 rounded-md transition duration-300 ease ${
                 isActive
-                  ? 'bg-yellow-300 font-bold text-[#444]'
-                  : 'hover:bg-gray-200 text-[#888] hover:text-[#444]'
+                  ? "bg-yellow-300 font-bold text-[#444]"
+                  : "hover:bg-gray-200 text-[#888] hover:text-[#444]"
               }`}
             >
               <span className="text-xl">{item.icon}</span>
@@ -67,4 +86,3 @@ function AdminSidebar() {
 }
 
 export default AdminSidebar;
-

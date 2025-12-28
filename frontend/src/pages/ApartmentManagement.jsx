@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
-import AdminTable from '../components/AdminTable';
-import PostDetailsModal from '../components/PostDetailsModal';
-import AxiosClient from '../AxiosClient';
-import { useUserContext } from '../contexts/UserContext';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useEffect, useState } from "react";
+import AdminTable from "../components/AdminTable";
+import PostDetailsModal from "../components/PostDetailsModal";
+import AxiosClient from "../AxiosClient";
+import { useUserContext } from "../contexts/UserContext";
+import { useLanguage } from "../contexts/LanguageContext";
+import { usePopup } from "../contexts/PopupContext";
 
 function ApartmentManagement() {
   const { t, translateStatus } = useLanguage();
@@ -13,6 +14,7 @@ function ApartmentManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const { setMessage } = useUserContext();
+  const { showConfirm } = usePopup();
 
   useEffect(() => {
     fetchPosts();
@@ -20,13 +22,13 @@ function ApartmentManagement() {
 
   const fetchPosts = () => {
     setLoading(true);
-    AxiosClient.get('/admin/posts')
+    AxiosClient.get("/admin/posts")
       .then((response) => {
         setPosts(response.data.data || []);
         setLoading(false);
       })
       .catch((error) => {
-        console.error('Error fetching posts:', error);
+        console.error("Error fetching posts:", error);
         setLoading(false);
       });
   };
@@ -35,50 +37,72 @@ function ApartmentManagement() {
     AxiosClient.patch(`/admin/posts/${post.id}/status`, { status: newStatus })
       .then(() => {
         setMessage(
-          t('admin.post') + ' ' + translateStatus(newStatus) + ' ' + t('common.success')
+          t("admin.post") +
+            " " +
+            translateStatus(newStatus) +
+            " " +
+            t("common.success")
         );
         fetchPosts();
       })
       .catch((error) => {
-        console.error('Error updating post status:', error);
-        setMessage(t('admin.errorUpdatingPost'), 'error');
+        console.error("Error updating post status:", error);
+        setMessage(t("admin.errorUpdatingPost"), "error");
       });
   };
 
-  const handleDelete = (post) => {
-    if (window.confirm(`${t('admin.delete')} "${post.Title}"?`)) {
+  const handleDelete = async (post) => {
+    const confirmed = await showConfirm({
+      title: t("admin.delete") + " " + t("admin.post"),
+      message: `${t("admin.delete")} "${post.Title}"?`,
+      confirmText: t("admin.delete"),
+      cancelText: t("admin.cancel"),
+      variant: "danger",
+    });
+
+    if (confirmed) {
       AxiosClient.delete(`/admin/posts/${post.id}`)
         .then(() => {
-          setMessage(t('admin.post') + ' ' + t('admin.deleted') + ' ' + t('common.success'));
+          setMessage(
+            t("admin.post") +
+              " " +
+              t("admin.deleted") +
+              " " +
+              t("common.success")
+          );
           fetchPosts();
         })
         .catch((error) => {
-          console.error('Error deleting post:', error);
-          setMessage(t('admin.errorDeletingPost'), 'error');
+          console.error("Error deleting post:", error);
+          setMessage(t("admin.errorDeletingPost"), "error");
         });
     }
   };
 
   const columns = [
-    { key: 'Title', label: t('admin.title') },
+    { key: "Title", label: t("admin.title") },
     {
-      key: 'user',
-      label: t('admin.owner'),
-      render: (value, row) => (row.user ? row.user.name : 'N/A'),
+      key: "user",
+      label: t("admin.owner"),
+      render: (value, row) => (row.user ? row.user.name : "N/A"),
     },
-    { key: 'Address', label: t('admin.address') },
+    { key: "Address", label: t("admin.address") },
     {
-      key: 'status',
-      label: t('admin.status'),
+      key: "status",
+      label: t("admin.status"),
       render: (value) => {
         const statusColors = {
-          active: 'bg-green-200',
-          pending: 'bg-yellow-200',
-          rented: 'bg-blue-200',
-          blocked: 'bg-red-200',
+          active: "bg-green-200",
+          pending: "bg-yellow-200",
+          rented: "bg-blue-200",
+          blocked: "bg-red-200",
         };
         return (
-          <span className={`px-2 py-1 rounded-md text-sm ${statusColors[value] || 'bg-gray-200'}`}>
+          <span
+            className={`px-2 py-1 rounded-md text-sm ${
+              statusColors[value] || "bg-gray-200"
+            }`}
+          >
             {translateStatus(value)}
           </span>
         );
@@ -100,34 +124,34 @@ function ApartmentManagement() {
   const actions = (post) => {
     const actionButtons = [
       {
-        label: t('admin.viewDetails'),
+        label: t("admin.viewDetails"),
         onClick: () => handleViewDetails(post),
-        variant: 'info',
+        variant: "info",
       },
       {
-        label: t('admin.edit'),
+        label: t("admin.edit"),
         onClick: () => handleEdit(post),
-        variant: 'default',
+        variant: "default",
       },
     ];
-    if (post.status !== 'active') {
+    if (post.status !== "active") {
       actionButtons.push({
-        label: t('admin.approve'),
-        onClick: () => handleStatusUpdate(post, 'active'),
-        variant: 'success',
+        label: t("admin.approve"),
+        onClick: () => handleStatusUpdate(post, "active"),
+        variant: "success",
       });
     }
-    if (post.status !== 'blocked') {
+    if (post.status !== "blocked") {
       actionButtons.push({
-        label: t('admin.block'),
-        onClick: () => handleStatusUpdate(post, 'blocked'),
-        variant: 'danger',
+        label: t("admin.block"),
+        onClick: () => handleStatusUpdate(post, "blocked"),
+        variant: "danger",
       });
     }
     actionButtons.push({
-      label: t('admin.delete'),
+      label: t("admin.delete"),
       onClick: () => handleDelete(post),
-      variant: 'danger',
+      variant: "danger",
     });
     return actionButtons;
   };
@@ -144,8 +168,15 @@ function ApartmentManagement() {
 
   return (
     <div className="px-5 mx-auto max-w-[1366px]">
-      <h1 className="text-3xl font-bold text-[#444] mb-8">{t('admin.apartmentManagement')}</h1>
-      <AdminTable columns={columns} data={posts} actions={actions} loading={loading} />
+      <h1 className="text-3xl font-bold text-[#444] mb-8">
+        {t("admin.apartmentManagement")}
+      </h1>
+      <AdminTable
+        columns={columns}
+        data={posts}
+        actions={actions}
+        loading={loading}
+      />
       {isModalOpen && selectedPost && (
         <PostDetailsModal
           postId={selectedPost.id}
@@ -160,4 +191,3 @@ function ApartmentManagement() {
 }
 
 export default ApartmentManagement;
-

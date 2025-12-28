@@ -71,6 +71,52 @@ function Profile() {
               <span>
                 {t('profile.email')} : <b>{user.email}</b>
               </span>
+
+              {/* Identity Verification Status */}
+              <div className="border border-gray-300 rounded-md p-4 bg-gray-50">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="font-semibold">Identity Verification Status</h4>
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                      user.identity_status === 'approved'
+                        ? 'bg-green-100 text-green-800'
+                        : user.identity_status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : user.identity_status === 'rejected'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    {user.identity_status === 'approved'
+                      ? '✓ Approved'
+                      : user.identity_status === 'pending'
+                      ? '⏳ Pending'
+                      : user.identity_status === 'rejected'
+                      ? '✗ Rejected'
+                      : 'Not Verified'}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 mb-3">
+                  {user.identity_status === 'approved'
+                    ? 'Your identity has been verified. You can create posts.'
+                    : user.identity_status === 'pending'
+                    ? 'Your verification is under review. Please wait for admin approval.'
+                    : user.identity_status === 'rejected'
+                    ? 'Your verification was rejected. Please resubmit your documents.'
+                    : 'You need to verify your identity before creating posts.'}
+                </p>
+                <Link
+                  to="/identity-verification"
+                  className="bg-yellow-300 hover:bg-yellow-400 text-[#444] font-semibold py-2 px-4 rounded-md transition duration-300 ease inline-block"
+                >
+                  {user.identity_status === 'approved'
+                    ? 'View Verification'
+                    : user.identity_status === 'pending'
+                    ? 'View Status'
+                    : 'Verify Identity'}
+                </Link>
+              </div>
+
               <button
                 className="bg-green-600 text-white py-3 px-5 rounded-md w-fit"
                 onClick={onLogout}

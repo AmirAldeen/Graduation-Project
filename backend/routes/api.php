@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\IdentityVerificationController;
 use App\Http\Controllers\ImageKitController;
 use App\Http\Controllers\postController;
 use App\Http\Controllers\PropertyController;
@@ -14,7 +15,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::post("/signup",[AuthController::class, "signup"]);
 Route::post("/login",[AuthController::class, "login"]);
-Route::apiResource("/post",postController::class);
 Route::get("/user-posts/{id}",[userController::class,"getUserPosts"]);
 Route::get("/property",[PropertyController::class,"index"]);
 Route::get("/is-post-saved",[SavedPostController::class,"isPostSaved"]);
@@ -26,7 +26,10 @@ Route::middleware("auth:sanctum")->group(function () {
             return new UserResource($request->user());
         });
         Route::apiResource("/users",userController::class);
+        Route::apiResource("/post",postController::class);
         Route::get('/imagekit/auth', [ImageKitController::class, 'auth']);
+        Route::post('/identity-verification', [IdentityVerificationController::class, 'store']);
+        Route::get('/identity-verification', [IdentityVerificationController::class, 'show']);
         Route::post("/saved-posts",[SavedPostController::class,"store"]);
         Route::get("/saved-posts/{id}",[SavedPostController::class,"index"]);
 
@@ -56,5 +59,11 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/notifications', [AdminController::class, 'getNotifications']);
     Route::get('/settings', [AdminController::class, 'getSettings']);
     Route::put('/settings', [AdminController::class, 'updateSettings']);
+    // Identity Verification Admin Routes
+    Route::get('/identity-verifications', [IdentityVerificationController::class, 'getAll']);
+    Route::get('/identity-verifications/pending', [IdentityVerificationController::class, 'getPending']);
+    Route::get('/identity-verifications/{id}', [IdentityVerificationController::class, 'getDetails']);
+    Route::post('/identity-verifications/{id}/approve', [IdentityVerificationController::class, 'approve']);
+    Route::post('/identity-verifications/{id}/reject', [IdentityVerificationController::class, 'reject']);
 });
 

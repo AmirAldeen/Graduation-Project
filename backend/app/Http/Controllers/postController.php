@@ -23,19 +23,19 @@ class postController extends Controller
             $query->where("City",$request->location);
 
         if($request->has("min") && !empty($request->min))
-            $query->where("price",">=",$request->min);
+            $query->where("Price",">=",$request->min);
 
         if($request->has("max") && !empty($request->max))
-            $query->where("price","<=",$request->max);
+            $query->where("Price","<=",$request->max);
 
         if($request->has("type") && !empty($request->type))
-            $query->where("type","=",$request->type);
+            $query->where("Type","=",$request->type);
 
         if($request->has("property") && !empty($request->property))
             $query->where("porperty_id",$request->property);
 
         if($request->has("bedroom") && !empty($request->bedroom))
-            $query->where("bedrooms","=",$request->bedroom);
+            $query->where("Bedrooms","=",$request->bedroom);
 
         $posts = $query->get();
         return PostResource::collection($posts);
@@ -46,9 +46,28 @@ class postController extends Controller
      */
     public function store(StorepostRequest $request)
     {
+        // Get authenticated user
+        $user = $request->user();
+        
+        // Security check: Ensure user is authenticated
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthorized. Please log in to create posts.',
+            ], 401);
+        }
+        
+        // Check identity verification status - CRITICAL SECURITY CHECK
+        // Check identity_status directly from users table (identityVerifications is a HasMany relationship)
+        if ($user->identity_status !== 'approved') {
+            return response()->json([
+                'message' => 'Identity verification required. Please submit your identity documents for verification before creating posts.',
+                'identity_status' => $user->identity_status ?? 'none',
+            ], 403);
+        }
+
         $data = $request->validated();
         $post = Post::create([
-            'user_id' => $request->user_id,
+            'user_id' => $user->id, // Use authenticated user's ID for security
             'porperty_id' => $request->porperty_id,
             'Title' => $request->title,
             'Description' => $request->description,
@@ -69,15 +88,17 @@ class postController extends Controller
             'Income_Policy' => $request->income_policy,
         ]);
 
-        $images = collect($request["images"])->map(function($url) use ($post) {
-            return [
-                "Image_URL" => $url,
-                "post_id" => $post->id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        })->toArray();
-        PostImage::insert($images);
+        if (!empty($request["images"]) && is_array($request["images"])) {
+            $images = collect($request["images"])->map(function($url) use ($post) {
+                return [
+                    "Image_URL" => $url,
+                    "post_id" => $post->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            })->toArray();
+            PostImage::insert($images);
+        }
 
         $post = $post->fresh()->load('postimage');
 

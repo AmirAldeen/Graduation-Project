@@ -22,7 +22,7 @@ class StorepostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "user_id" => "required|exists:users,id",
+            // user_id removed - will use authenticated user's ID for security
             "title" => "required|string",
             "price" => "required|numeric",
             "address" => "required:string",

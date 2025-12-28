@@ -1,61 +1,79 @@
-import React, { useEffect, useState } from 'react';
-import AxiosClient from '../AxiosClient';
-import { useUserContext } from '../contexts/UserContext';
-import UploadWidget from '../components/UploadWidget';
-import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '../contexts/LanguageContext';
+import React, { useEffect, useState } from "react";
+import AxiosClient from "../AxiosClient";
+import { useUserContext } from "../contexts/UserContext";
+import UploadWidget from "../components/UploadWidget";
+import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../contexts/LanguageContext";
 
 function AddPost() {
   const [properties, setProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState(null);
   const { user } = useUserContext();
-  const [lat, setLat] = useState('');
-  const [len, setLen] = useState('');
+  const [lat, setLat] = useState("");
+  const [len, setLen] = useState("");
   const [avatarURL, setAvatarURL] = useState(null);
   const navigate = useNavigate();
   const { t } = useLanguage();
 
   useEffect(() => {
-    AxiosClient.get('/property').then((response) => {
+    // Check identity status before allowing post creation
+    if (user && user.identity_status !== "approved") {
+      navigate("/identity-verification");
+      return;
+    }
+
+    AxiosClient.get("/property").then((response) => {
       setProperties(response.data);
       setLoading(false);
     });
-  }, []);
+  }, [user, navigate]);
   const onSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const inputs = Object.fromEntries(formData);
     const payload = {
       user_id: user.id,
-      title: inputs['title'],
-      price: parseInt(inputs['price']),
+      title: inputs["title"],
+      price: parseInt(inputs["price"]),
       address: inputs.address,
-      description: inputs['des'],
-      city: inputs['city'],
-      bedrooms: parseInt(inputs['bed-num']),
-      bathrooms: parseInt(inputs['bath-num']),
+      description: inputs["des"],
+      city: inputs["city"],
+      bedrooms: parseInt(inputs["bed-num"]),
+      bathrooms: parseInt(inputs["bath-num"]),
       latitude: lat,
       longitude: len,
-      type: inputs['type'],
-      porperty_id: parseInt(inputs['prop']),
-      utilities_policy: inputs['utl-policy'],
-      pet_policy: inputs['pet-policy'] == 'true',
-      income_policy: inputs['income-policy'],
-      total_size: parseInt(inputs['total-size']),
-      bus: parseInt(inputs['bus']),
-      resturant: parseInt(inputs['resturant']),
-      school: parseInt(inputs['school']),
+      type: inputs["type"],
+      porperty_id: parseInt(inputs["prop"]),
+      utilities_policy: inputs["utl-policy"],
+      pet_policy: inputs["pet-policy"] == "true",
+      income_policy: inputs["income-policy"],
+      total_size: parseInt(inputs["total-size"]),
+      bus: parseInt(inputs["bus"]),
+      resturant: parseInt(inputs["resturant"]),
+      school: parseInt(inputs["school"]),
       images: avatarURL,
     };
     setErrors(null);
-    AxiosClient.post('/post', payload)
+    AxiosClient.post("/post", payload)
       .then((response) => {
         console.log(response);
-        navigate('/');
+        navigate("/");
       })
       .catch((error) => {
-        setErrors(error.response.data.errors);
+        if (
+          error.response?.status === 403 &&
+          error.response?.data?.message?.includes("Identity verification")
+        ) {
+          // Identity verification required
+          navigate("/identity-verification");
+          return;
+        }
+        setErrors(
+          error.response?.data?.errors || {
+            general: [error.response?.data?.message || "Failed to create post"],
+          }
+        );
       });
   };
   const handleLocation = () => {
@@ -68,7 +86,7 @@ function AddPost() {
         // console.log('Longitude:', longitude);
       },
       (error) => {
-        console.error('Error getting location:', error.message);
+        console.error("Error getting location:", error.message);
       }
     );
   };
@@ -79,7 +97,7 @@ function AddPost() {
      lg:flex lg:justify-between h-[calc(100vh-100px)] overflow-hidden"
     >
       <div className="inputs lg:w-3/5 lg:pr-10 flex flex-col gap-12 mb-3 overflow-y-scroll relative">
-        <h2 className="font-bold text-3xl">{t('addPost.title')}</h2>
+        <h2 className="font-bold text-3xl">{t("addPost.title")}</h2>
         {errors && (
           <div className="bg-red-500 text-white p-3 rounded-md">
             {Object.keys(errors).map((e, i) => {
@@ -89,7 +107,7 @@ function AddPost() {
         )}
         {loading ? (
           <div className="absolute top-1/2 right-1/2 font-bold text-3xl text-green-600">
-            {t('common.loading')}
+            {t("common.loading")}
           </div>
         ) : (
           <form
@@ -98,7 +116,7 @@ function AddPost() {
           >
             <div className="title-item flex flex-col">
               <label htmlFor="title" className="font-semibold text-sm">
-                {t('addPost.titleLabel')}
+                {t("addPost.titleLabel")}
               </label>
               <input
                 type="text"
@@ -109,7 +127,7 @@ function AddPost() {
             </div>
             <div className="price-item flex flex-col">
               <label htmlFor="price" className="font-semibold text-sm">
-                {t('addPost.price')}
+                {t("addPost.price")}
               </label>
               <input
                 type="number"
@@ -120,7 +138,7 @@ function AddPost() {
             </div>
             <div className="address-item flex flex-col">
               <label htmlFor="address" className="font-semibold text-sm">
-                {t('addPost.address')}
+                {t("addPost.address")}
               </label>
               <input
                 type="text"
@@ -131,7 +149,7 @@ function AddPost() {
             </div>
             <div className="des-item flex flex-col w-full outline-none">
               <label htmlFor="des" className="font-semibold text-sm">
-                {t('addPost.description')}
+                {t("addPost.description")}
               </label>
               <textarea
                 name="des"
@@ -141,7 +159,7 @@ function AddPost() {
             </div>
             <div className="city-item flex flex-col">
               <label htmlFor="city" className="font-semibold text-sm">
-                {t('addPost.city')}
+                {t("addPost.city")}
               </label>
               <input
                 type="text"
@@ -152,7 +170,7 @@ function AddPost() {
             </div>
             <div className="bed-item flex flex-col">
               <label htmlFor="bed-num" className="font-semibold text-sm">
-                {t('addPost.bedroomNumber')}
+                {t("addPost.bedroomNumber")}
               </label>
               <input
                 type="number"
@@ -163,7 +181,7 @@ function AddPost() {
             </div>
             <div className="bath-item flex flex-col">
               <label htmlFor="bath-num" className="font-semibold text-sm">
-                {t('addPost.bathroomNumber')}
+                {t("addPost.bathroomNumber")}
               </label>
               <input
                 type="number"
@@ -174,7 +192,7 @@ function AddPost() {
             </div>
             <div className="lat-item flex flex-col">
               <label htmlFor="lat" className="font-semibold text-sm">
-                {t('addPost.latitude')}
+                {t("addPost.latitude")}
               </label>
               <input
                 type="text"
@@ -189,7 +207,7 @@ function AddPost() {
             </div>
             <div className="len-item flex flex-col">
               <label htmlFor="len" className="font-semibold text-sm">
-                {t('addPost.longitude')}
+                {t("addPost.longitude")}
               </label>
               <input
                 type="text"
@@ -204,7 +222,7 @@ function AddPost() {
             </div>
             <div className="type-item flex flex-col">
               <label htmlFor="type" className="font-semibold text-sm">
-                {t('addPost.type')}
+                {t("addPost.type")}
               </label>
               <select
                 type="text"
@@ -212,13 +230,13 @@ function AddPost() {
                 id="type"
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               >
-                <option value="rent">{t('search.rent')}</option>
-                <option value="buy">{t('search.buy')}</option>
+                <option value="rent">{t("search.rent")}</option>
+                <option value="buy">{t("search.buy")}</option>
               </select>
             </div>
             <div className="property-item flex flex-col">
               <label htmlFor="prop" className="font-semibold text-sm">
-                {t('addPost.property')}
+                {t("addPost.property")}
               </label>
               <select
                 type="text"
@@ -227,13 +245,17 @@ function AddPost() {
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               >
                 {properties.map((e) => {
-                  return <option key={e.id} value={e.id}>{e.name}</option>;
+                  return (
+                    <option key={e.id} value={e.id}>
+                      {e.name}
+                    </option>
+                  );
                 })}
               </select>
             </div>
             <div className="utilities-item flex flex-col">
               <label htmlFor="utl-policy" className="font-semibold text-sm">
-                {t('addPost.utilitiesPolicy')}
+                {t("addPost.utilitiesPolicy")}
               </label>
               <select
                 type="text"
@@ -241,14 +263,14 @@ function AddPost() {
                 id="utl-policy"
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               >
-                <option value="owner">{t('addPost.ownerResponsible')}</option>
-                <option value="tenant">{t('addPost.tenantResponsible')}</option>
-                <option value="share">{t('addPost.shared')}</option>
+                <option value="owner">{t("addPost.ownerResponsible")}</option>
+                <option value="tenant">{t("addPost.tenantResponsible")}</option>
+                <option value="share">{t("addPost.shared")}</option>
               </select>
             </div>
             <div className="pet-item flex flex-col">
               <label htmlFor="pet-policy" className="font-semibold text-sm">
-                {t('addPost.petPolicy')}
+                {t("addPost.petPolicy")}
               </label>
               <select
                 type="text"
@@ -256,13 +278,13 @@ function AddPost() {
                 id="pet-policy"
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               >
-                <option value="true">{t('addPost.allowed')}</option>
-                <option value="false">{t('addPost.notAllowed')}</option>
+                <option value="true">{t("addPost.allowed")}</option>
+                <option value="false">{t("addPost.notAllowed")}</option>
               </select>
             </div>
             <div className="income-item flex flex-col">
               <label htmlFor="income-policy" className="font-semibold text-sm">
-                {t('addPost.incomePolicy')}
+                {t("addPost.incomePolicy")}
               </label>
               <input
                 type="number"
@@ -273,7 +295,7 @@ function AddPost() {
             </div>
             <div className="total-size-item flex flex-col">
               <label htmlFor="total-size" className="font-semibold text-sm">
-                {t('addPost.totalSize')}
+                {t("addPost.totalSize")}
               </label>
               <input
                 type="number"
@@ -284,7 +306,7 @@ function AddPost() {
             </div>
             <div className="school-item flex flex-col">
               <label htmlFor="school" className="font-semibold text-sm">
-                {t('addPost.school')}
+                {t("addPost.school")}
               </label>
               <input
                 type="number"
@@ -295,7 +317,7 @@ function AddPost() {
             </div>
             <div className="resturant-item flex flex-col">
               <label htmlFor="resturant" className="font-semibold text-sm">
-                {t('addPost.restaurant')}
+                {t("addPost.restaurant")}
               </label>
               <input
                 type="number"
@@ -306,7 +328,7 @@ function AddPost() {
             </div>
             <div className="bus-item flex flex-col">
               <label htmlFor="bus" className="font-semibold text-sm">
-                {t('addPost.bus')}
+                {t("addPost.bus")}
               </label>
               <input
                 type="number"
@@ -316,14 +338,14 @@ function AddPost() {
               />
             </div>
             <button className="bg-green-600 h-[86px] text-white font-semibold rounded-md w-[230px] hover:bg-green-800 transition">
-              {t('addPost.create')}
+              {t("addPost.create")}
             </button>
             <div
               className="bg-green-600 h-[86px] text-white font-semibold rounded-md 
               w-[230px] flex justify-center items-center cursor-pointer transition hover:bg-green-800"
               onClick={handleLocation}
             >
-              {t('addPost.currentLocation')}
+              {t("addPost.currentLocation")}
             </div>
           </form>
         )}

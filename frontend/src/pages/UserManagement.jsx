@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
-import AdminTable from '../components/AdminTable';
-import UserDetailsModal from '../components/UserDetailsModal';
-import AxiosClient from '../AxiosClient';
-import { useUserContext } from '../contexts/UserContext';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useEffect, useState } from "react";
+import AdminTable from "../components/AdminTable";
+import UserDetailsModal from "../components/UserDetailsModal";
+import AxiosClient from "../AxiosClient";
+import { useUserContext } from "../contexts/UserContext";
+import { useLanguage } from "../contexts/LanguageContext";
+import { usePopup } from "../contexts/PopupContext";
 
 function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -12,6 +13,7 @@ function UserManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { setMessage } = useUserContext();
   const { t, translateRole, translateStatus } = useLanguage();
+  const { showConfirm } = usePopup();
 
   useEffect(() => {
     fetchUsers();
@@ -19,47 +21,63 @@ function UserManagement() {
 
   const fetchUsers = () => {
     setLoading(true);
-    AxiosClient.get('/admin/users')
+    AxiosClient.get("/admin/users")
       .then((response) => {
         setUsers(response.data.data || []);
         setLoading(false);
       })
       .catch((error) => {
-        console.error('Error fetching users:', error);
+        console.error("Error fetching users:", error);
         setLoading(false);
       });
   };
 
   const handleToggleStatus = (user) => {
-    const newStatus = user.status === 'active' ? 'disabled' : 'active';
+    const newStatus = user.status === "active" ? "disabled" : "active";
     AxiosClient.patch(`/admin/users/${user.id}/status`, { status: newStatus })
       .then(() => {
         setMessage(
-          t('admin.user') +
-            ' ' +
-            (newStatus === 'active' ? t('admin.enabled') : t('admin.disabled')) +
-            ' ' +
-            t('common.success')
+          t("admin.user") +
+            " " +
+            (newStatus === "active"
+              ? t("admin.enabled")
+              : t("admin.disabled")) +
+            " " +
+            t("common.success")
         );
         fetchUsers();
       })
       .catch((error) => {
-        console.error('Error updating user status:', error);
-        setMessage(t('admin.errorUpdatingStatus'), 'error');
+        console.error("Error updating user status:", error);
+        setMessage(t("admin.errorUpdatingStatus"), "error");
       });
   };
 
-  const handleDelete = (user) => {
-    if (window.confirm(`${t('admin.delete')} ${t('admin.user')} ${user.name}?`)) {
+  const handleDelete = async (user) => {
+    const confirmed = await showConfirm({
+      title: t("admin.delete") + " " + t("admin.user"),
+      message: `${t("admin.delete")} ${t("admin.user")} ${user.name}?`,
+      confirmText: t("admin.delete"),
+      cancelText: t("admin.cancel"),
+      variant: "danger",
+    });
+
+    if (confirmed) {
       AxiosClient.delete(`/admin/users/${user.id}`)
         .then(() => {
-          setMessage(t('admin.user') + ' ' + t('admin.deleted') + ' ' + t('common.success'));
+          setMessage(
+            t("admin.user") +
+              " " +
+              t("admin.deleted") +
+              " " +
+              t("common.success")
+          );
           fetchUsers();
         })
-      .catch((error) => {
-        console.error('Error deleting user:', error);
-        setMessage(t('admin.errorDeletingUser'), 'error');
-      });
+        .catch((error) => {
+          console.error("Error deleting user:", error);
+          setMessage(t("admin.errorDeletingUser"), "error");
+        });
     }
   };
 
@@ -78,22 +96,24 @@ function UserManagement() {
   };
 
   const columns = [
-    { key: 'name', label: t('admin.name') },
-    { key: 'email', label: t('admin.email') },
+    { key: "name", label: t("admin.name") },
+    { key: "email", label: t("admin.email") },
     {
-      key: 'role',
-      label: t('admin.role'),
+      key: "role",
+      label: t("admin.role"),
       render: (value) => (
-        <span className="bg-gray-200 px-2 py-1 rounded-md text-sm">{translateRole(value)}</span>
+        <span className="bg-gray-200 px-2 py-1 rounded-md text-sm">
+          {translateRole(value)}
+        </span>
       ),
     },
     {
-      key: 'status',
-      label: t('admin.status'),
+      key: "status",
+      label: t("admin.status"),
       render: (value) => (
         <span
           className={`px-2 py-1 rounded-md text-sm ${
-            value === 'active' ? 'bg-green-200' : 'bg-red-200'
+            value === "active" ? "bg-green-200" : "bg-red-200"
           }`}
         >
           {translateStatus(value)}
@@ -104,26 +124,33 @@ function UserManagement() {
 
   const actions = (user) => [
     {
-      label: t('admin.viewDetails'),
+      label: t("admin.viewDetails"),
       onClick: () => handleViewDetails(user),
-      variant: 'default',
+      variant: "default",
     },
     {
-      label: user.status === 'active' ? t('admin.disable') : t('admin.enable'),
+      label: user.status === "active" ? t("admin.disable") : t("admin.enable"),
       onClick: () => handleToggleStatus(user),
-      variant: user.status === 'active' ? 'default' : 'success',
+      variant: user.status === "active" ? "default" : "success",
     },
     {
-      label: t('admin.delete'),
+      label: t("admin.delete"),
       onClick: () => handleDelete(user),
-      variant: 'danger',
+      variant: "danger",
     },
   ];
 
   return (
     <div className="px-5 mx-auto max-w-[1366px]">
-      <h1 className="text-3xl font-bold text-[#444] mb-8">{t('admin.userManagement')}</h1>
-      <AdminTable columns={columns} data={users} actions={actions} loading={loading} />
+      <h1 className="text-3xl font-bold text-[#444] mb-8">
+        {t("admin.userManagement")}
+      </h1>
+      <AdminTable
+        columns={columns}
+        data={users}
+        actions={actions}
+        loading={loading}
+      />
       <UserDetailsModal
         userId={selectedUserId}
         isOpen={isModalOpen}

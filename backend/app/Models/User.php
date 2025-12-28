@@ -26,6 +26,7 @@ class User extends Authenticatable
         'avatar',
         'role',
         'status',
+        'identity_status',
     ];
 
     /**
@@ -69,5 +70,9 @@ class User extends Authenticatable
     public function reviews() : HasMany
     {
         return $this->hasMany(Review::class);
+    }
+    public function identityVerifications() : HasMany
+    {
+        return $this->hasMany(IdentityVerification::class);
     }
 }
