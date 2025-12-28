@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use ImageKit\ImageKit;
-
 class ImageKitController extends Controller
 {
     public function auth(Request $request)
