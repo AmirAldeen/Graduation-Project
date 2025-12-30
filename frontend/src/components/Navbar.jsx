@@ -1,16 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useUserContext } from '../contexts/UserContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useDarkMode } from '../contexts/DarkModeContext';
 import AxiosClient from '../AxiosClient';
 
 function Navbar() {
   const [sidebar, setSidebar] = useState(false);
   const [profileDropdown, setProfileDropdown] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef(null);
   const { user, isAdmin, setUser, setToken } = useUserContext();
   const { language, setLanguage, t } = useLanguage();
+  const { darkMode, toggleDarkMode } = useDarkMode();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -25,6 +29,28 @@ function Navbar() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Fetch unread notifications count
+  useEffect(() => {
+    if (user) {
+      fetchUnreadCount();
+      // Poll for new notifications every 30 seconds
+      const interval = setInterval(() => {
+        fetchUnreadCount();
+      }, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const fetchUnreadCount = () => {
+    AxiosClient.get('/notifications/unread-count')
+      .then((response) => {
+        setUnreadCount(response.data.count || 0);
+      })
+      .catch((error) => {
+        console.error('Error fetching unread count:', error);
+      });
+  };
 
   const handleLogout = () => {
     AxiosClient.post('/logout')
@@ -52,11 +78,11 @@ function Navbar() {
   // }, []);
 
   return (
-    <div className="px-5 mx-auto max-w-[1366px] max-md:max-w-[640px] max-lg:max-w-[768px] max-xl:max-w-[1280px]">
-      <nav className="flex justify-between items-center h-[100px] relative">
+    <div className="px-5 mx-auto max-w-[1366px] max-md:max-w-[640px] max-lg:max-w-[768px] max-xl:max-w-[1280px] dark:bg-gray-900">
+      <nav className="flex justify-between items-center h-[100px] relative dark:bg-gray-900">
         <div className="left flex-1 flex items-center gap-12 max-md:gap-10">
           <Link
-            className="logo flex items-center font-bold text-xl max-lg:text-lg gap-2.5 hover:scale-105 transition duration-300 eas"
+            className="logo flex items-center font-bold text-xl max-lg:text-lg gap-2.5 hover:scale-105 transition duration-300 eas dark:text-white"
             to="/"
           >
             <img src="/public/logo.png" alt="" className="w-7" />
@@ -64,41 +90,63 @@ function Navbar() {
           </Link>
           <Link
             href="#"
-            className="hover:scale-105 transition duration-300 ease rounded-md max-md:hidden"
+            className={`hover:scale-105 transition duration-300 ease rounded-md max-md:hidden dark:text-gray-200 ${
+              location.pathname === '/' ? 'bg-yellow-300 dark:bg-yellow-400 text-[#444] dark:text-gray-900 px-3 py-1 font-bold rounded-md' : ''
+            }`}
             to="/"
           >
             {t('navbar.home')}
           </Link>
           <Link
             href="#"
-            className="hover:scale-105 transition duration-300 ease rounded-md max-md:hidden"
+            className={`hover:scale-105 transition duration-300 ease rounded-md max-md:hidden dark:text-gray-200 ${
+              location.pathname === '/about' ? 'bg-yellow-300 dark:bg-yellow-400 text-[#444] dark:text-gray-900 px-3 py-1 font-bold rounded-md' : ''
+            }`}
             to="/about"
           >
             {t('navbar.about')}
           </Link>
-          <Link
-            href="#"
-            className="hover:scale-105 transition duration-300 ease rounded-md max-md:hidden"
-          >
-            {t('navbar.contact')}
-          </Link>
-          <Link
-            href="#"
-            className="hover:scale-105 transition duration-300 ease rounded-md max-md:hidden"
-          >
-            {t('navbar.agents')}
-          </Link>
+          {user && (
+            <Link
+              to="/booking-requests"
+              className={`hover:scale-105 transition duration-300 ease rounded-md max-md:hidden dark:text-gray-200 ${
+                location.pathname === '/booking-requests' || location.pathname.startsWith('/contracts/') 
+                  ? 'bg-yellow-300 dark:bg-yellow-400 text-[#444] dark:text-gray-900 px-3 py-1 font-bold rounded-md' : ''
+              }`}
+            >
+              {t('navbar.bookingRequests')}
+            </Link>
+          )}
+          {user && (
+            <Link
+              to="/notifications"
+              className={`hover:scale-105 transition duration-300 ease rounded-md max-md:hidden relative dark:text-gray-200 ${
+                location.pathname === '/notifications' 
+                  ? 'bg-yellow-300 dark:bg-yellow-400 text-[#444] dark:text-gray-900 px-3 py-1 font-bold rounded-md' : ''
+              }`}
+            >
+              <span className="text-2xl">🔔</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Link>
+          )}
           {user && isAdmin() && (
             <Link
               to="/admin/dashboard"
-              className="bg-yellow-300 px-4 py-2 hover:scale-105 transition duration-300 ease rounded-md max-md:hidden font-bold"
+              className={`px-4 py-2 hover:scale-105 transition duration-300 ease rounded-md max-md:hidden font-bold ${
+                location.pathname.startsWith('/admin') 
+                  ? 'bg-yellow-400 dark:bg-yellow-500 text-[#444] dark:text-gray-900' : 'bg-yellow-300 dark:bg-yellow-400 text-[#444] dark:text-gray-900'
+              }`}
             >
               Admin
             </Link>
           )}
         </div>
         <div
-          className={`right md:w-2/5 flex items-center md:justify-end lg:bg-[#fcf5f3] h-full relative
+          className={`right md:w-2/5 flex items-center md:justify-end lg:bg-[#fcf5f3] dark:lg:bg-gray-800 h-full relative
           ${user ? '' : 'gap-12'}`}
         >
           {user ? (
@@ -112,7 +160,7 @@ function Navbar() {
                   alt=""
                   className="w-10 h-10 rounded-full object-cover border-2 border-yellow-300"
                 />
-                <span className="font-bold max-md:hidden">{user.name}</span>
+                <span className="font-bold max-md:hidden dark:text-white">{user.name}</span>
                 <svg
                   className={`w-4 h-4 transition-transform duration-300 ${profileDropdown ? 'rotate-180' : ''}`}
                   fill="none"
@@ -124,14 +172,14 @@ function Navbar() {
               </button>
               
               {profileDropdown && (
-                <div className={`absolute top-full mt-2 w-48 bg-white rounded-md shadow-xl border border-gray-200 z-[10000] ${
+                <div className={`absolute top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-xl border border-gray-200 dark:border-gray-700 z-[10000] ${
                   language === 'ar' ? 'left-0' : 'right-0'
                 }`}>
                   <div className="py-1">
                     <Link
                       to="/user/profile"
                       onClick={() => setProfileDropdown(false)}
-                      className={`block px-4 py-2 text-sm text-[#444] hover:bg-yellow-300 transition duration-300 ease ${
+                      className={`block px-4 py-2 text-sm text-[#444] dark:text-gray-200 hover:bg-yellow-300 dark:hover:bg-yellow-600 transition duration-300 ease ${
                         language === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
@@ -139,7 +187,7 @@ function Navbar() {
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className={`block w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition duration-300 ease ${
+                      className={`block w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 transition duration-300 ease ${
                         language === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
@@ -153,14 +201,14 @@ function Navbar() {
             <>
               <Link
                 href="#"
-                className="hover:scale-105 transition duration-300 ease rounded-md max-md:hidden"
+                className="hover:scale-105 transition duration-300 ease rounded-md max-md:hidden dark:text-gray-200"
                 to="/login"
               >
                 {t('navbar.login')}
               </Link>
               <Link
                 href="#"
-                className={`bg-yellow-300 px-4 py-2 hover:scale-105 transition duration-300 ease rounded-md max-md:hidden ${
+                className={`bg-yellow-300 dark:bg-yellow-400 px-4 py-2 hover:scale-105 transition duration-300 ease rounded-md max-md:hidden text-[#444] dark:text-gray-900 ${
                   language === 'ar' ? 'ml-2' : 'mr-2'
                 }`}
                 to="/signup"
@@ -170,10 +218,21 @@ function Navbar() {
             </>
           )}
 
+          {/* Dark Mode Toggle Button */}
+          <button
+            onClick={toggleDarkMode}
+            className={`bg-gray-700 dark:bg-yellow-300 hover:scale-105 px-4 py-2 rounded-md font-bold transition duration-300 ease text-white dark:text-[#444] ${
+              language === 'ar' ? 'max-md:ml-2' : 'max-md:mr-2'
+            }`}
+            title={darkMode ? (language === 'en' ? 'Switch to Light Mode' : 'التبديل إلى الوضع الفاتح') : (language === 'en' ? 'Switch to Dark Mode' : 'التبديل إلى الوضع الداكن')}
+          >
+            {darkMode ? '☀️' : '🌙'}
+          </button>
+
           {/* Language Toggle Button */}
           <button
             onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-            className={`bg-yellow-300 hover:scale-105 px-4 py-2 rounded-md font-bold transition duration-300 ease text-[#444] ${
+            className={`bg-yellow-300 dark:bg-yellow-400 hover:scale-105 px-4 py-2 rounded-md font-bold transition duration-300 ease text-[#444] dark:text-gray-900 ${
               language === 'ar' ? 'max-md:ml-2' : 'max-md:mr-2'
             }`}
             title={language === 'en' ? 'Switch to Arabic' : 'التبديل إلى الإنجليزية'}

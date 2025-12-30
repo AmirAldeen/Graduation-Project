@@ -56,4 +56,9 @@ class Post extends Model
     {
         return $this->hasMany(Review::class);
     }
+    
+    public function payments() : HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
 }

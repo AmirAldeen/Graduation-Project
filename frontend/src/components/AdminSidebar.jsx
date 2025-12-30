@@ -34,15 +34,15 @@ function AdminSidebar() {
   ];
 
   return (
-    <div className="w-64 bg-[#fcf5f3] min-h-screen p-5 max-md:w-full max-md:min-h-0 flex flex-col">
+    <div className="w-64 bg-[#fcf5f3] dark:bg-gray-800 min-h-screen p-5 max-md:w-full max-md:min-h-0 flex flex-col">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-[#444]">Admin Panel</h2>
+        <h2 className="text-2xl font-bold text-[#444] dark:text-white">Admin Panel</h2>
       </div>
 
       {/* Back to Home Button */}
       <Link
         to="/"
-        className="mb-4 bg-yellow-300 hover:scale-105 px-4 py-3 rounded-md font-bold transition duration-300 ease text-[#444] flex items-center justify-center gap-2"
+        className="mb-4 bg-yellow-300 dark:bg-yellow-400 hover:scale-105 px-4 py-3 rounded-md font-bold transition duration-300 ease text-[#444] dark:text-gray-900 flex items-center justify-center gap-2"
       >
         <span>🏠</span>
         <span>{t("admin.backToHome")}</span>
@@ -52,7 +52,7 @@ function AdminSidebar() {
       <div className="mb-6">
         <button
           onClick={() => setLanguage(language === "en" ? "ar" : "en")}
-          className="w-full bg-yellow-300 hover:scale-105 px-4 py-3 rounded-md font-bold transition duration-300 ease text-[#444] flex items-center justify-center gap-2"
+          className="w-full bg-yellow-300 dark:bg-yellow-400 hover:scale-105 px-4 py-3 rounded-md font-bold transition duration-300 ease text-[#444] dark:text-gray-900 flex items-center justify-center gap-2"
           title={
             language === "en" ? "Switch to Arabic" : "التبديل إلى الإنجليزية"
           }
@@ -71,8 +71,8 @@ function AdminSidebar() {
               to={item.path}
               className={`flex items-center gap-3 px-4 py-3 rounded-md transition duration-300 ease ${
                 isActive
-                  ? "bg-yellow-300 font-bold text-[#444]"
-                  : "hover:bg-gray-200 text-[#888] hover:text-[#444]"
+                  ? "bg-yellow-300 dark:bg-yellow-400 font-bold text-[#444] dark:text-gray-900"
+                  : "hover:bg-gray-200 dark:hover:bg-gray-700 text-[#888] dark:text-gray-300 hover:text-[#444] dark:hover:text-white"
               }`}
             >
               <span className="text-xl">{item.icon}</span>

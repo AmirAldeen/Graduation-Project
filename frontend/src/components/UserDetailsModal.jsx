@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AxiosClient from '../AxiosClient';
 import { useUserContext } from '../contexts/UserContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -21,6 +22,7 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
   });
   const { setMessage } = useUserContext();
   const { t, translateRole, translateStatus } = useLanguage();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isOpen && userId) {
@@ -110,31 +112,43 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-md p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-md p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-[#444]">{t('admin.userDetails')}</h2>
-          <button
-            onClick={onClose}
-            className="text-2xl text-[#888] hover:text-[#444] transition duration-300 ease"
-          >
-            ×
-          </button>
+          <h2 className="text-2xl font-bold text-[#444] dark:text-white">{t('admin.userDetails')}</h2>
+          <div className="flex gap-2 items-center">
+            <button
+              onClick={() => {
+                onClose();
+                navigate('/admin/users');
+              }}
+              className="bg-yellow-300 dark:bg-yellow-400 hover:bg-yellow-400 dark:hover:bg-yellow-500 text-[#444] dark:text-gray-900 font-semibold px-4 py-2 rounded-md transition text-sm"
+              title={t('admin.backToUsers') || 'Back to Users Management'}
+            >
+              {t('admin.backToUsers') || 'Back to Users'}
+            </button>
+            <button
+              onClick={onClose}
+              className="text-2xl text-[#888] dark:text-gray-400 hover:text-[#444] dark:hover:text-white transition duration-300 ease"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         {loading && !user ? (
           <div className="text-center py-8">
-            <p className="text-[#888]">{t('common.loading')}</p>
+            <p className="text-[#888] dark:text-gray-400">{t('common.loading')}</p>
           </div>
         ) : (
           <>
             {/* Tabs */}
-            <div className="flex gap-2 mb-6 border-b border-gray-200">
+            <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setActiveTab('details')}
                 className={`px-4 py-2 font-semibold transition duration-300 ease ${
                   activeTab === 'details'
-                    ? 'bg-yellow-300 text-[#444] border-b-2 border-yellow-300'
-                    : 'text-[#888] hover:text-[#444]'
+                    ? 'bg-yellow-300 dark:bg-yellow-400 text-[#444] dark:text-gray-900 border-b-2 border-yellow-300 dark:border-yellow-400'
+                    : 'text-[#888] dark:text-gray-400 hover:text-[#444] dark:hover:text-white'
                 }`}
               >
                 {t('admin.details')}
@@ -143,8 +157,8 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                 onClick={() => setActiveTab('identity')}
                 className={`px-4 py-2 font-semibold transition duration-300 ease ${
                   activeTab === 'identity'
-                    ? 'bg-yellow-300 text-[#444] border-b-2 border-yellow-300'
-                    : 'text-[#888] hover:text-[#444]'
+                    ? 'bg-yellow-300 dark:bg-yellow-400 text-[#444] dark:text-gray-900 border-b-2 border-yellow-300 dark:border-yellow-400'
+                    : 'text-[#888] dark:text-gray-400 hover:text-[#444] dark:hover:text-white'
                 }`}
               >
                 {t('admin.identity')}
@@ -153,8 +167,8 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                 onClick={() => setActiveTab('activities')}
                 className={`px-4 py-2 font-semibold transition duration-300 ease ${
                   activeTab === 'activities'
-                    ? 'bg-yellow-300 text-[#444] border-b-2 border-yellow-300'
-                    : 'text-[#888] hover:text-[#444]'
+                    ? 'bg-yellow-300 dark:bg-yellow-400 text-[#444] dark:text-gray-900 border-b-2 border-yellow-300 dark:border-yellow-400'
+                    : 'text-[#888] dark:text-gray-400 hover:text-[#444] dark:hover:text-white'
                 }`}
               >
                 {t('admin.activities')} {stats && `(${stats.total_posts + stats.total_contracts + stats.total_rental_requests + stats.total_saved_posts + stats.total_reviews})`}
@@ -165,7 +179,7 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
             {activeTab === 'details' && (
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-[#444] mb-2">
+                  <label className="block text-sm font-semibold text-[#444] dark:text-white mb-2">
                     {t('admin.name')}
                   </label>
                   <input
@@ -173,13 +187,13 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 dark:focus:ring-yellow-500"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-[#444] mb-2">
+                  <label className="block text-sm font-semibold text-[#444] dark:text-white mb-2">
                     {t('admin.email')}
                   </label>
                   <input
@@ -187,20 +201,20 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 dark:focus:ring-yellow-500"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-[#444] mb-2">
+                  <label className="block text-sm font-semibold text-[#444] dark:text-white mb-2">
                     {t('admin.role')}
                   </label>
                   <select
                     name="role"
                     value={formData.role}
                     onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 dark:focus:ring-yellow-500"
                   >
                     <option value="user">{translateRole('user')}</option>
                     <option value="admin">{translateRole('admin')}</option>
@@ -208,14 +222,14 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-[#444] mb-2">
+                  <label className="block text-sm font-semibold text-[#444] dark:text-white mb-2">
                     {t('admin.status')}
                   </label>
                   <select
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 dark:focus:ring-yellow-500"
                   >
                     <option value="active">{translateStatus('active')}</option>
                     <option value="disabled">{translateStatus('disabled')}</option>
@@ -223,7 +237,7 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-[#444] mb-2">
+                  <label className="block text-sm font-semibold text-[#444] dark:text-white mb-2">
                     {t('admin.avatar')}
                   </label>
                   <input
@@ -232,12 +246,12 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                     value={formData.avatar}
                     onChange={handleChange}
                     placeholder="Avatar URL"
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 dark:focus:ring-yellow-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-[#444] mb-2">
+                  <label className="block text-sm font-semibold text-[#444] dark:text-white mb-2">
                     {t('admin.password')} ({t('admin.leaveBlank')})
                   </label>
                   <input
@@ -245,13 +259,13 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                    className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 dark:focus:ring-yellow-500"
                   />
                 </div>
 
                 {formData.password && (
                   <div>
-                    <label className="block text-sm font-semibold text-[#444] mb-2">
+                    <label className="block text-sm font-semibold text-[#444] dark:text-white mb-2">
                       {t('admin.confirmPassword')}
                     </label>
                     <input
@@ -259,7 +273,7 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                       name="password_confirmation"
                       value={formData.password_confirmation}
                       onChange={handleChange}
-                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                      className="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 dark:focus:ring-yellow-500"
                     />
                   </div>
                 )}
@@ -268,7 +282,7 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                   <button
                     type="button"
                     onClick={onClose}
-                    className="bg-gray-200 px-6 py-3 rounded-md font-bold hover:scale-105 transition duration-300 ease"
+                    className="bg-gray-200 dark:bg-gray-700 dark:text-white px-6 py-3 rounded-md font-bold hover:scale-105 transition duration-300 ease"
                   >
                     {t('admin.cancel')}
                   </button>
@@ -288,47 +302,62 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
               <div className="space-y-6">
                 {identity ? (
                   <>
-                    <div className="bg-gray-100 rounded-md p-4">
-                      <h3 className="text-lg font-bold text-[#444] mb-4">{t('admin.identityInformation')}</h3>
+                    <div className="bg-gray-100 dark:bg-gray-700 rounded-md p-4">
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-bold text-[#444] dark:text-white">{t('admin.identityInformation')}</h3>
+                        <button
+                          onClick={() => {
+                            onClose();
+                            if (identity?.id) {
+                              navigate(`/admin/identity-verifications?verificationId=${identity.id}`);
+                            } else {
+                              navigate('/admin/identity-verifications');
+                            }
+                          }}
+                          className="bg-yellow-300 dark:bg-yellow-400 hover:bg-yellow-400 dark:hover:bg-yellow-500 text-[#444] dark:text-gray-900 font-semibold px-4 py-2 rounded-md transition text-sm"
+                        >
+                          {t('admin.viewIdentity') || 'View Identity Page'}
+                        </button>
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.fullName')}</label>
-                          <p className="text-[#444]">{identity.full_name || '-'}</p>
+                          <label className="block text-sm font-semibold text-[#888] dark:text-gray-400 mb-1">{t('admin.fullName')}</label>
+                          <p className="text-[#444] dark:text-white">{identity.full_name || '-'}</p>
                         </div>
                         <div>
-                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.documentNumber')}</label>
-                          <p className="text-[#444]">{identity.document_number || '-'}</p>
+                          <label className="block text-sm font-semibold text-[#888] dark:text-gray-400 mb-1">{t('admin.documentNumber')}</label>
+                          <p className="text-[#444] dark:text-white">{identity.document_number || '-'}</p>
                         </div>
                         <div>
-                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.documentType')}</label>
-                          <p className="text-[#444]">{identity.document_type === 'id_card' ? t('admin.idCard') : t('admin.passport')}</p>
+                          <label className="block text-sm font-semibold text-[#888] dark:text-gray-400 mb-1">{t('admin.documentType')}</label>
+                          <p className="text-[#444] dark:text-white">{identity.document_type === 'id_card' ? t('admin.idCard') : t('admin.passport')}</p>
                         </div>
                         <div>
-                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.dateOfBirth')}</label>
+                          <label className="block text-sm font-semibold text-[#888] dark:text-gray-400 mb-1">{t('admin.dateOfBirth')}</label>
                           <p className="text-[#444]">{formatDate(identity.date_of_birth) || '-'}</p>
                         </div>
                         <div>
-                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.placeOfBirth')}</label>
-                          <p className="text-[#444]">{identity.place_of_birth || '-'}</p>
+                          <label className="block text-sm font-semibold text-[#888] dark:text-gray-400 mb-1">{t('admin.placeOfBirth')}</label>
+                          <p className="text-[#444] dark:text-white">{identity.place_of_birth || '-'}</p>
                         </div>
                         <div>
-                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.nationality')}</label>
-                          <p className="text-[#444]">{identity.nationality || '-'}</p>
+                          <label className="block text-sm font-semibold text-[#888] dark:text-gray-400 mb-1">{t('admin.nationality')}</label>
+                          <p className="text-[#444] dark:text-white">{identity.nationality || '-'}</p>
                         </div>
                         <div>
-                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.issueDate')}</label>
+                          <label className="block text-sm font-semibold text-[#888] dark:text-gray-400 mb-1">{t('admin.issueDate')}</label>
                           <p className="text-[#444]">{formatDate(identity.issue_date) || '-'}</p>
                         </div>
                         <div>
-                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.expiryDate')}</label>
+                          <label className="block text-sm font-semibold text-[#888] dark:text-gray-400 mb-1">{t('admin.expiryDate')}</label>
                           <p className="text-[#444]">{formatDate(identity.expiry_date) || '-'}</p>
                         </div>
                         <div className="md:col-span-2">
-                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.address')}</label>
-                          <p className="text-[#444]">{identity.address || '-'}</p>
+                          <label className="block text-sm font-semibold text-[#888] dark:text-gray-400 mb-1">{t('admin.address')}</label>
+                          <p className="text-[#444] dark:text-white">{identity.address || '-'}</p>
                         </div>
                         <div className="md:col-span-2">
-                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.status')}</label>
+                          <label className="block text-sm font-semibold text-[#888] dark:text-gray-400 mb-1">{t('admin.status')}</label>
                           <span className={`px-2 py-1 rounded-md text-sm ${
                             identity.status === 'approved' ? 'bg-green-200' :
                             identity.status === 'rejected' ? 'bg-red-200' :
@@ -339,14 +368,14 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                         </div>
                         {identity.admin_notes && (
                           <div className="md:col-span-2">
-                            <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.adminNotes')}</label>
-                            <p className="text-[#444] bg-gray-50 p-3 rounded-md">{identity.admin_notes}</p>
+                            <label className="block text-sm font-semibold text-[#888] dark:text-gray-400 mb-1">{t('admin.adminNotes')}</label>
+                            <p className="text-[#444] dark:text-white bg-gray-50 dark:bg-gray-600 p-3 rounded-md">{identity.admin_notes}</p>
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="bg-gray-100 rounded-md p-4">
-                      <h3 className="text-lg font-bold text-[#444] mb-4">{t('admin.identityDocuments')}</h3>
+                    <div className="bg-gray-100 dark:bg-gray-700 rounded-md p-4">
+                      <h3 className="text-lg font-bold text-[#444] dark:text-white mb-4">{t('admin.identityDocuments')}</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {identity.document_front_url && (
                           <div>
@@ -441,7 +470,15 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                     {activities.posts && activities.posts.length > 0 ? (
                       <div className="space-y-2">
                         {activities.posts.map((post) => (
-                          <div key={post.id} className="bg-white p-3 rounded-md">
+                          <div 
+                            key={post.id} 
+                            className="bg-white p-3 rounded-md cursor-pointer hover:bg-gray-50 transition duration-200"
+                            onClick={() => {
+                              onClose();
+                              navigate(`/admin/apartments?postId=${post.id}`);
+                            }}
+                            title={t('admin.clickToView') || 'Click to view in apartments page'}
+                          >
                             <div className="font-semibold text-[#444]">{post.Title}</div>
                             <div className="text-sm text-[#888]">{post.Address}</div>
                             <div className="text-xs text-[#888] mt-1">
@@ -463,7 +500,15 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                     {activities.contracts && activities.contracts.length > 0 ? (
                       <div className="space-y-2">
                         {activities.contracts.map((contract) => (
-                          <div key={contract.id} className="bg-white p-3 rounded-md">
+                          <div 
+                            key={contract.id} 
+                            className="bg-white p-3 rounded-md cursor-pointer hover:bg-gray-50 transition duration-200"
+                            onClick={() => {
+                              onClose();
+                              navigate(`/admin/contracts?contractId=${contract.id}`);
+                            }}
+                            title={t('admin.clickToView') || 'Click to view in contracts page'}
+                          >
                             <div className="font-semibold text-[#444]">{contract.post?.Title || '-'}</div>
                             <div className="text-sm text-[#888]">
                               {formatDate(contract.start_date)} - {formatDate(contract.end_date)}
@@ -487,7 +532,15 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                     {activities.rental_requests && activities.rental_requests.length > 0 ? (
                       <div className="space-y-2">
                         {activities.rental_requests.map((request) => (
-                          <div key={request.id} className="bg-white p-3 rounded-md">
+                          <div 
+                            key={request.id} 
+                            className="bg-white p-3 rounded-md cursor-pointer hover:bg-gray-50 transition duration-200"
+                            onClick={() => {
+                              onClose();
+                              navigate(`/admin/rental-requests?requestId=${request.id}`);
+                            }}
+                            title={t('admin.clickToView') || 'Click to view rental request'}
+                          >
                             <div className="font-semibold text-[#444]">{request.post?.Title || '-'}</div>
                             <div className="text-sm text-[#888]">{request.post?.Address || '-'}</div>
                             <div className="text-xs text-[#888] mt-1">
@@ -509,7 +562,19 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                     {activities.saved_posts && activities.saved_posts.length > 0 ? (
                       <div className="space-y-2">
                         {activities.saved_posts.map((saved) => (
-                          <div key={saved.id} className="bg-white p-3 rounded-md">
+                          <div 
+                            key={saved.id} 
+                            className="bg-white p-3 rounded-md cursor-pointer hover:bg-gray-50 transition duration-200"
+                            onClick={() => {
+                              onClose();
+                              if (saved.post?.id) {
+                                navigate(`/admin/apartments?postId=${saved.post.id}`);
+                              } else {
+                                navigate('/admin/apartments');
+                              }
+                            }}
+                            title={t('admin.clickToView') || 'Click to view in apartments page'}
+                          >
                             <div className="font-semibold text-[#444]">{saved.post?.Title || '-'}</div>
                             <div className="text-sm text-[#888]">{saved.post?.Address || '-'}</div>
                             <div className="text-xs text-[#888] mt-1">{formatDate(saved.created_at)}</div>
@@ -529,7 +594,15 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                     {activities.reviews && activities.reviews.length > 0 ? (
                       <div className="space-y-2">
                         {activities.reviews.map((review) => (
-                          <div key={review.id} className="bg-white p-3 rounded-md">
+                          <div 
+                            key={review.id} 
+                            className="bg-white p-3 rounded-md cursor-pointer hover:bg-gray-50 transition duration-200"
+                            onClick={() => {
+                              onClose();
+                              navigate(`/admin/reviews?reviewId=${review.id}`);
+                            }}
+                            title={t('admin.clickToView') || 'Click to view review'}
+                          >
                             <div className="font-semibold text-[#444]">{review.post?.Title || '-'}</div>
                             <div className="text-sm text-[#888]">
                               {t('admin.rating')}: {'⭐'.repeat(review.rating)}

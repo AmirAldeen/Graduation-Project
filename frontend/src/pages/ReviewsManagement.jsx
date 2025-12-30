@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import AdminTable from "../components/AdminTable";
 import AxiosClient from "../AxiosClient";
 import { useUserContext } from "../contexts/UserContext";
@@ -7,14 +8,27 @@ import { usePopup } from "../contexts/PopupContext";
 
 function ReviewsManagement() {
   const { t, translateStatus } = useLanguage();
+  const [searchParams] = useSearchParams();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const { setMessage } = useUserContext();
   const { showConfirm } = usePopup();
+  const highlightedId = searchParams.get('reviewId');
 
   useEffect(() => {
     fetchReviews();
   }, []);
+
+  useEffect(() => {
+    if (highlightedId && reviews.length > 0) {
+      setTimeout(() => {
+        const element = document.getElementById(`row-${highlightedId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    }
+  }, [highlightedId, reviews]);
 
   const fetchReviews = () => {
     setLoading(true);
@@ -120,6 +134,7 @@ function ReviewsManagement() {
         data={reviews}
         actions={actions}
         loading={loading}
+        highlightedRowId={highlightedId}
       />
     </div>
   );

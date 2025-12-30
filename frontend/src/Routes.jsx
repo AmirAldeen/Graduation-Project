@@ -22,6 +22,10 @@ import AdminNotifications from "./pages/AdminNotifications";
 import AdminSettings from "./pages/AdminSettings";
 import IdentityVerification from "./pages/IdentityVerification";
 import IdentityVerificationReview from "./pages/IdentityVerificationReview";
+import BookingRequests from "./pages/BookingRequests";
+import Notifications from "./pages/Notifications";
+import Payment from "./pages/Payment";
+import ContractSigning from "./pages/ContractSigning";
 import EstateInfoLoader from "./Lib/Loaders";
 
 const route = createBrowserRouter([
@@ -85,6 +89,22 @@ const route = createBrowserRouter([
       {
         path: "/identity-verification",
         element: <IdentityVerification />,
+      },
+      {
+        path: "/booking-requests",
+        element: <BookingRequests />,
+      },
+      {
+        path: "/notifications",
+        element: <Notifications />,
+      },
+      {
+        path: "/payment",
+        element: <Payment />,
+      },
+      {
+        path: "/contracts/:id",
+        element: <ContractSigning />,
       },
     ],
   },

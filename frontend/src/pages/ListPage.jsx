@@ -22,7 +22,7 @@ function ListPage() {
   return (
     <div
       className="px-5 mx-auto max-w-[1366px] max-md:max-w-[640px] max-lg:max-w-[768px] max-xl:max-w-[1280px]
-     lg:flex lg:justify-between h-[calc(100vh-100px)]"
+     lg:flex lg:justify-between h-[calc(100vh-100px)] dark:bg-gray-900"
     >
       {loading ? (
         <div className={`text-3xl text-green-600 font-bold absolute top-1/2 ${
@@ -44,7 +44,7 @@ function ListPage() {
               })}
             </div>
           </div>
-          <div className="map lg:flex-1 md:bg-[#fcf5f3]">
+          <div className="map lg:flex-1 md:bg-[#fcf5f3] dark:md:bg-gray-800">
             <Map data={posts} />
           </div>
         </>

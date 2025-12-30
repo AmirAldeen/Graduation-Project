@@ -264,19 +264,105 @@ class AdminController extends Controller
     }
 
     /**
-     * Update rental request status
+     * Update rental request status (Admin can cancel in all stages)
      */
     public function updateRentalRequestStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,approved,rejected',
+            'status' => 'required|in:pending,approved,rejected,cancelled',
         ]);
 
-        $rentalRequest = RentalRequest::findOrFail($id);
+        $rentalRequest = RentalRequest::with(['post', 'contract'])->findOrFail($id);
+        $oldStatus = $rentalRequest->status;
         $rentalRequest->status = $request->status;
         $rentalRequest->save();
 
+        // If cancelling, also cancel associated contract and restore post
+        if ($request->status === 'cancelled') {
+            $contract = \App\Models\Contract::where('rental_request_id', $rentalRequest->id)->first();
+            if ($contract) {
+                $contract->update(['status' => 'cancelled']);
+                // Restore the post to active status
+                if ($contract->post && $contract->post->status === 'rented') {
+                    $contract->post->update(['status' => 'active']);
+                }
+            }
+
+            // Notify both parties
+            \App\Models\Notification::create([
+                'user_id' => $rentalRequest->post->user_id,
+                'type' => 'booking_cancelled',
+                'title' => 'Booking Request Cancelled by Administration',
+                'message' => "Your booking request for {$rentalRequest->post->Title} has been cancelled by the administration.",
+                'data' => [
+                    'booking_request_id' => $rentalRequest->id,
+                    'post_id' => $rentalRequest->post_id,
+                    'title' => $rentalRequest->post->Title,
+                ],
+            ]);
+
+            \App\Models\Notification::create([
+                'user_id' => $rentalRequest->user_id,
+                'type' => 'booking_cancelled',
+                'title' => 'Booking Request Cancelled by Administration',
+                'message' => "Your booking request for {$rentalRequest->post->Title} has been cancelled by the administration.",
+                'data' => [
+                    'booking_request_id' => $rentalRequest->id,
+                    'post_id' => $rentalRequest->post_id,
+                    'title' => $rentalRequest->post->Title,
+                ],
+            ]);
+        }
+
         return response()->json(['message' => 'Rental request status updated successfully', 'request' => $rentalRequest]);
+    }
+
+    /**
+     * Delete a rental request
+     */
+    public function deleteRentalRequest($id)
+    {
+        $rentalRequest = RentalRequest::with(['post', 'contract'])->findOrFail($id);
+        
+        // If there's an associated contract, cancel it first
+        if ($rentalRequest->contract) {
+            $contract = $rentalRequest->contract;
+            if ($contract->post && $contract->status === 'active') {
+                $contract->post->update(['status' => 'active']);
+            }
+            $contract->update(['status' => 'cancelled']);
+        }
+        
+        // Notify both parties before deletion
+        if ($rentalRequest->post) {
+            \App\Models\Notification::create([
+                'user_id' => $rentalRequest->post->user_id,
+                'type' => 'booking_deleted_by_admin',
+                'title' => 'Booking Request Deleted by Administration',
+                'message' => "The booking request for {$rentalRequest->post->Title} has been deleted by the administration.",
+                'data' => [
+                    'booking_request_id' => $rentalRequest->id,
+                    'post_id' => $rentalRequest->post_id,
+                    'title' => $rentalRequest->post->Title,
+                ],
+            ]);
+        }
+
+        \App\Models\Notification::create([
+            'user_id' => $rentalRequest->user_id,
+            'type' => 'booking_deleted_by_admin',
+            'title' => 'Booking Request Deleted by Administration',
+            'message' => "Your booking request for {$rentalRequest->post->Title} has been deleted by the administration.",
+            'data' => [
+                'booking_request_id' => $rentalRequest->id,
+                'post_id' => $rentalRequest->post_id,
+                'title' => $rentalRequest->post->Title,
+            ],
+        ]);
+        
+        $rentalRequest->delete();
+
+        return response()->json(['message' => 'Rental request deleted successfully']);
     }
 
     /**
@@ -286,6 +372,7 @@ class AdminController extends Controller
     {
         $perPage = $request->get('per_page', 15);
         $contracts = Contract::with(['user:id,name,email', 'post:id,Title,Address'])
+            ->where('status', '!=', 'draft')
             ->select('id', 'user_id', 'post_id', 'start_date', 'end_date', 'monthly_rent', 'status', 'created_at')
             ->paginate($perPage);
 
@@ -301,11 +388,109 @@ class AdminController extends Controller
             'status' => 'required|in:active,expired,cancelled',
         ]);
 
-        $contract = Contract::findOrFail($id);
+        $contract = Contract::with(['post', 'user', 'rentalRequest'])->findOrFail($id);
+        $oldStatus = $contract->status;
         $contract->status = $request->status;
+        
+        // If cancelling the contract, mark as cancelled by admin and restore the post
+        if ($request->status === 'cancelled') {
+            $contract->cancelled_by_admin = true;
+            
+            // Restore the post to active status (make it available again)
+            // Always set to active regardless of current status to ensure it appears in listings
+            if ($contract->post) {
+                $contract->post->update(['status' => 'active']);
+            }
+            
+            // Update rental request status to cancelled if it exists
+            if ($contract->rentalRequest) {
+                $contract->rentalRequest->update(['status' => 'cancelled']);
+            }
+            
+            // Notify both parties
+            \App\Models\Notification::create([
+                'user_id' => $contract->post->user_id,
+                'type' => 'contract_cancelled_by_admin',
+                'title' => 'Contract Cancelled by Administration',
+                'message' => "The contract for {$contract->post->Title} has been cancelled by the administration.",
+                'data' => [
+                    'contract_id' => $contract->id,
+                    'post_id' => $contract->post_id,
+                    'title' => $contract->post->Title,
+                ],
+            ]);
+
+            $renterId = $contract->user_id ?? ($contract->rentalRequest ? $contract->rentalRequest->user_id : null);
+            if ($renterId) {
+                \App\Models\Notification::create([
+                    'user_id' => $renterId,
+                    'type' => 'contract_cancelled_by_admin',
+                    'title' => 'Contract Cancelled by Administration',
+                    'message' => "The contract for {$contract->post->Title} has been cancelled by the administration.",
+                    'data' => [
+                        'contract_id' => $contract->id,
+                        'post_id' => $contract->post_id,
+                        'title' => $contract->post->Title,
+                    ],
+                ]);
+            }
+        }
+        
         $contract->save();
 
         return response()->json(['message' => 'Contract status updated successfully', 'contract' => $contract]);
+    }
+
+    /**
+     * Delete a contract
+     */
+    public function deleteContract($id)
+    {
+        $contract = Contract::with(['post', 'user', 'rentalRequest'])->findOrFail($id);
+        
+        // Restore the post to active status if contract is active
+        if ($contract->post && $contract->status === 'active') {
+            $contract->post->update(['status' => 'active']);
+        }
+        
+        // Update rental request status to cancelled if it exists
+        if ($contract->rentalRequest) {
+            $contract->rentalRequest->update(['status' => 'cancelled']);
+        }
+        
+        // Notify both parties before deletion
+        if ($contract->post) {
+            \App\Models\Notification::create([
+                'user_id' => $contract->post->user_id,
+                'type' => 'contract_deleted_by_admin',
+                'title' => 'Contract Deleted by Administration',
+                'message' => "The contract for {$contract->post->Title} has been deleted by the administration.",
+                'data' => [
+                    'contract_id' => $contract->id,
+                    'post_id' => $contract->post_id,
+                    'title' => $contract->post->Title,
+                ],
+            ]);
+        }
+
+        $renterId = $contract->user_id ?? ($contract->rentalRequest ? $contract->rentalRequest->user_id : null);
+        if ($renterId) {
+            \App\Models\Notification::create([
+                'user_id' => $renterId,
+                'type' => 'contract_deleted_by_admin',
+                'title' => 'Contract Deleted by Administration',
+                'message' => "The contract for {$contract->post->Title} has been deleted by the administration.",
+                'data' => [
+                    'contract_id' => $contract->id,
+                    'post_id' => $contract->post_id,
+                    'title' => $contract->post->Title,
+                ],
+            ]);
+        }
+        
+        $contract->delete();
+
+        return response()->json(['message' => 'Contract deleted successfully']);
     }
 
     /**

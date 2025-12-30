@@ -109,25 +109,25 @@ function EstateCard({ estate, showSaveButton = true }) {
       </Link>
       <div className="content flex justify-between flex-col gap-2 flex-1 h-full">
         <Link to={`/${estate?.id || '#'}`}>
-          <h3 className="font-semibold text-lg text-[#444] transition duration-400 hover:text-black hover:scale-105">
+          <h3 className="font-semibold text-lg text-[#444] dark:text-white transition duration-400 hover:text-black dark:hover:text-gray-300 hover:scale-105">
             {estate?.Title || 'Untitled'}
           </h3>
         </Link>
-        <p className="font-light flex items-center gap-1 text-sm text-[#888]">
+        <p className="font-light flex items-center gap-1 text-sm text-[#888] dark:text-gray-400">
           <img src="/public/pin.png" alt="" className="w-4" />
           {estate?.Address || 'Address not specified'}
         </p>
-        <p className="bg-yellow-200 w-fit p-1 text-xl rounded-md">
+        <p className="bg-yellow-200 dark:bg-yellow-600 w-fit p-1 text-xl rounded-md dark:text-white">
           ${estate?.Price || 0}
         </p>
         <div className="flex justify-between gap-2">
           <div className="flex gap-4 text-sm">
-            <span className="flex gap-1 bg-gray-200 p-1 items-center rounded-md">
+            <span className="flex gap-1 bg-gray-200 dark:bg-gray-700 p-1 items-center rounded-md dark:text-gray-200">
               <img src="/public/bed.png" alt="" className="w-4" />
               {estate?.Bedrooms || 0}
               bedroom
             </span>
-            <span className="flex gap-1 bg-gray-200 p-1 items-center rounded-md">
+            <span className="flex gap-1 bg-gray-200 dark:bg-gray-700 p-1 items-center rounded-md dark:text-gray-200">
               <img src="/public/bath.png" alt="" className="w-4" />
               {estate?.Bathrooms || 0}
               bathroom
@@ -138,10 +138,10 @@ function EstateCard({ estate, showSaveButton = true }) {
               <button
                 onClick={handleSaveToggle}
                 disabled={saving}
-                className={`border py-[5px] px-2 rounded-sm cursor-pointer transition ${
+                className={`border dark:border-gray-600 py-[5px] px-2 rounded-sm cursor-pointer transition ${
                   isSaved 
-                    ? 'bg-yellow-300 hover:bg-yellow-400' 
-                    : 'hover:bg-gray-400'
+                    ? 'bg-yellow-300 dark:bg-yellow-500 hover:bg-yellow-400 dark:hover:bg-yellow-600' 
+                    : 'hover:bg-gray-400 dark:hover:bg-gray-600'
                 } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
                 title={isSaved ? t('apartments.unsave') || 'Unsave' : t('apartments.save') || 'Save'}
               >
@@ -151,7 +151,7 @@ function EstateCard({ estate, showSaveButton = true }) {
                   className="w-4" 
                 />
               </button>
-              <div className="border py-[5px] px-2 rounded-sm cursor-pointer hover:bg-gray-400 transition">
+              <div className="border dark:border-gray-600 py-[5px] px-2 rounded-sm cursor-pointer hover:bg-gray-400 dark:hover:bg-gray-600 transition">
                 <img src="/public/chat.png" alt="" className="w-4" />
               </div>
             </div>
