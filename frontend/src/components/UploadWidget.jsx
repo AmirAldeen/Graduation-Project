@@ -45,7 +45,7 @@ export default function UploadWidget({ setAvatarURL, isMultiple = true }) {
         // Get fresh ImageKit authentication parameters for each file
         // (ImageKit tokens can only be used once)
         const auth = await AxiosClient.get("/imagekit/auth", {
-          params: { _t: Date.now() } // Cache-busting parameter
+          params: { _t: Date.now() }, // Cache-busting parameter
         });
 
         // Check for ImageKit configuration errors

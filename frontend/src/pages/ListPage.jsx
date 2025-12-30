@@ -10,7 +10,7 @@ function ListPage() {
   const [properties, setProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const { posts } = usePostContext();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     AxiosClient.get('/property').then((response) => {
@@ -25,12 +25,18 @@ function ListPage() {
      lg:flex lg:justify-between h-[calc(100vh-100px)]"
     >
       {loading ? (
-        <div className="text-3xl text-green-600 font-bold absolute right-1/2 top-1/2">
+        <div className={`text-3xl text-green-600 font-bold absolute top-1/2 ${
+          language === 'ar' 
+            ? 'left-1/2 -translate-x-1/2' 
+            : 'right-1/2 translate-x-1/2'
+        }`}>
           {t('common.loading')}
         </div>
       ) : (
         <>
-          <div className="content lg:w-3/5 lg:pr-24 flex flex-col gap-12 overflow-y-scroll mb-3">
+          <div className={`content lg:w-3/5 flex flex-col gap-12 overflow-y-scroll mb-3 ${
+            language === 'ar' ? 'lg:pl-24' : 'lg:pr-24'
+          }`}>
             <Filter properties={properties} loading={setLoading} />
             <div className="flex flex-col gap-5 mt-5">
               {posts.map((es) => {

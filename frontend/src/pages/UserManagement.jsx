@@ -11,17 +11,28 @@ function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const { setMessage } = useUserContext();
-  const { t, translateRole, translateStatus } = useLanguage();
+  const { t, translateRole, translateStatus, language } = useLanguage();
   const { showConfirm } = usePopup();
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    // Debounce search
+    const timeoutId = setTimeout(() => {
+      fetchUsers();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
   const fetchUsers = () => {
     setLoading(true);
-    AxiosClient.get("/admin/users")
+    const params = searchTerm ? { search: searchTerm } : {};
+    AxiosClient.get("/admin/users", { params })
       .then((response) => {
         setUsers(response.data.data || []);
         setLoading(false);
@@ -145,6 +156,17 @@ function UserManagement() {
       <h1 className="text-3xl font-bold text-[#444] mb-8">
         {t("admin.userManagement")}
       </h1>
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder={t("admin.searchUsers") || "Search by name, email, national ID, or identity name..."}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className={`w-full max-w-md border border-gray-300 rounded-md px-4 py-2 outline-none focus:ring-2 focus:ring-yellow-300 ${
+            language === 'ar' ? 'text-right' : 'text-left'
+          }`}
+        />
+      </div>
       <AdminTable
         columns={columns}
         data={users}

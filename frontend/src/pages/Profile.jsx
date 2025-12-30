@@ -1,18 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import EstateCard from '../components/EstateCard';
 import Chat from '../components/Chat';
 import { useUserContext } from '../contexts/UserContext';
 import AxiosClient from '../AxiosClient';
 import Notification from '../components/Notification';
-import { usePostContext } from '../contexts/PostContext';
 import { useLanguage } from '../contexts/LanguageContext';
 
 function Profile() {
   const { user, setUser, setToken, message } = useUserContext();
-  const { posts } = usePostContext();
-  const { t } = useLanguage();
-  const [userPosts, setUserPosts] = useState(null);
+  const { t, language } = useLanguage();
   const [userSavedPosts, setUserSavedPosts] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,12 +21,9 @@ function Profile() {
   };
 
   useEffect(() => {
-    AxiosClient.get(`/user-posts/${user.id}`).then((response) => {
-      setUserPosts(response.data);
-      AxiosClient.get(`/saved-posts/${user.id}`).then((response) => {
-        setUserSavedPosts(response.data);
-        setLoading(false);
-      });
+    AxiosClient.get(`/saved-posts/${user.id}`).then((response) => {
+      setUserSavedPosts(response.data);
+      setLoading(false);
     });
   }, []);
   return (
@@ -38,13 +32,19 @@ function Profile() {
      lg:flex lg:justify-between h-[calc(100vh-100px)]"
     >
       {loading ? (
-        <div className="text-3xl text-green-600 font-bold absolute right-1/2 top-1/2">
+        <div className={`text-3xl text-green-600 font-bold absolute top-1/2 ${
+          language === 'ar' 
+            ? 'left-1/2 -translate-x-1/2' 
+            : 'right-1/2 translate-x-1/2'
+        }`}>
           {t('common.loading')}
         </div>
       ) : (
         <>
           {' '}
-          <div className="left lg:w-3/5 lg:pr-10 flex flex-col gap-12 lg:overflow-y-scroll mb-3">
+          <div className={`left lg:w-3/5 flex flex-col gap-12 lg:overflow-y-scroll mb-3 ${
+            language === 'ar' ? 'lg:pl-10' : 'lg:pr-10'
+          }`}>
             <div className="title flex justify-between">
               <h3 className="text-3xl font-light">{t('profile.userInformation')}</h3>
               <Link
@@ -125,31 +125,9 @@ function Profile() {
               </button>
             </div>
 
-            <div className="my-list">
-              <div className="flex justify-between">
-                <h3 className="text-3xl font-light">{t('profile.myList')}</h3>
-                <Link
-                  className="bg-yellow-300 px-4 py-2 hover:scale-105 transition duration-300 ease rounded-md"
-                  to="/post/add"
-                >
-                  {t('profile.addNewPost')}
-                </Link>
-              </div>
-              <div>
-                <div className="flex flex-col gap-5 mt-5">
-                  {userPosts.map((es) => {
-                    return <EstateCard key={es.id} estate={es} />;
-                  })}
-                </div>
-              </div>
-            </div>
-
             <div className="saved-list">
               <div className="flex justify-between">
                 <h3 className="text-3xl font-light">{t('profile.savedList')}</h3>
-                <Link className="bg-yellow-300 px-4 py-2 hover:scale-105 transition duration-300 ease rounded-md">
-                  {t('profile.addNewPost')}
-                </Link>
               </div>
               <div>
                 <div className="flex flex-col gap-5 mt-5">

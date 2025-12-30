@@ -13,7 +13,8 @@ class SavedPostController extends Controller
     {
         $savedPosts = SavedPost::where("user_id", "=", $id)->get();
         $postsId = $savedPosts->pluck("post_id");
-        $posts = Post::whereIn("id",$postsId)->get();
+        // Exclude draft posts from saved posts
+        $posts = Post::whereIn("id",$postsId)->where("status", "!=", "draft")->get();
         return response(PostResource::collection($posts),200);
     }
     public function store(Request $request)

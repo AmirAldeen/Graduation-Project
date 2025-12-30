@@ -410,30 +410,80 @@ function IdentityVerification() {
 
       {verification && (identityStatus === 'pending' || user?.identity_status === 'pending') && (
         <div className="bg-white p-6 rounded-md shadow-md">
-          <h3 className="font-bold text-lg mb-4">Submitted Documents</h3>
-          <div className="space-y-4">
+          <h3 className="font-bold text-lg mb-4">{t('identityVerification.submittedDocuments') || 'Submitted Documents'}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="font-semibold mb-2">Front Document:</p>
-              <a
-                href={verification.document_front_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
-              >
-                View Document
-              </a>
+              <p className="font-semibold mb-2">{t('identityVerification.frontDocument') || 'Front Document:'}</p>
+              {verification.document_front_url ? (
+                <div className="border border-gray-300 rounded-md overflow-hidden">
+                  <a
+                    href={verification.document_front_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <img
+                      src={verification.document_front_url}
+                      alt="Front Document"
+                      className="w-full h-auto max-h-64 object-contain bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        if (e.target.nextSibling) {
+                          e.target.nextSibling.style.display = 'block';
+                        }
+                      }}
+                    />
+                    <div style={{ display: 'none' }} className="p-4 text-center text-gray-500">
+                      <p>{t('identityVerification.unableToLoad') || 'Unable to load image'}</p>
+                      <a
+                        href={verification.document_front_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline mt-2 inline-block"
+                      >
+                        {t('identityVerification.viewDocument') || 'View Document'}
+                      </a>
+                    </div>
+                  </a>
+                </div>
+              ) : (
+                <p className="text-gray-500">{t('identityVerification.noDocument') || 'No document uploaded'}</p>
+              )}
             </div>
             {verification.document_back_url && (
               <div>
-                <p className="font-semibold mb-2">Back Document:</p>
-                <a
-                  href={verification.document_back_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  View Document
-                </a>
+                <p className="font-semibold mb-2">{t('identityVerification.backDocument') || 'Back Document:'}</p>
+                <div className="border border-gray-300 rounded-md overflow-hidden">
+                  <a
+                    href={verification.document_back_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <img
+                      src={verification.document_back_url}
+                      alt="Back Document"
+                      className="w-full h-auto max-h-64 object-contain bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        if (e.target.nextSibling) {
+                          e.target.nextSibling.style.display = 'block';
+                        }
+                      }}
+                    />
+                    <div style={{ display: 'none' }} className="p-4 text-center text-gray-500">
+                      <p>{t('identityVerification.unableToLoad') || 'Unable to load image'}</p>
+                      <a
+                        href={verification.document_back_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline mt-2 inline-block"
+                      >
+                        {t('identityVerification.viewDocument') || 'View Document'}
+                      </a>
+                    </div>
+                  </a>
+                </div>
               </div>
             )}
           </div>

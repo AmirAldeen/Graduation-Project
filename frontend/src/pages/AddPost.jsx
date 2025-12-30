@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import AxiosClient from "../AxiosClient";
 import { useUserContext } from "../contexts/UserContext";
 import UploadWidget from "../components/UploadWidget";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
+import { usePopup } from "../contexts/PopupContext";
 
 function AddPost() {
   const [properties, setProperties] = useState(null);
@@ -13,52 +14,155 @@ function AddPost() {
   const [lat, setLat] = useState("");
   const [len, setLen] = useState("");
   const [avatarURL, setAvatarURL] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [postId, setPostId] = useState(null);
+  const [postData, setPostData] = useState(null);
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const [searchParams] = useSearchParams();
+  const { t, language } = useLanguage();
+  const { showToast } = usePopup();
 
   useEffect(() => {
-    // Check identity status before allowing post creation
-    if (user && user.identity_status !== "approved") {
-      navigate("/identity-verification");
-      return;
+    // Check if editing
+    const editId = searchParams.get('edit');
+    if (editId) {
+      setIsEditing(true);
+      setPostId(editId);
+      // Fetch post data
+      AxiosClient.get(`/post/${editId}`)
+        .then((response) => {
+          const post = response.data.post || response.data;
+          setPostData(post);
+          // Fill form with existing data
+          setLat(post.latitude || "");
+          setLen(post.longitude || "");
+          if (post.images && post.images.length > 0) {
+            const imageUrls = post.images.map(img => img.Image_URL || img.image_url || img);
+            setAvatarURL(imageUrls);
+          }
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching post:", error);
+          showToast(t("apartments.errorLoading") || "Error loading post", "error");
+          navigate("/about");
+        });
+    } else {
+      // Check identity status before allowing post creation (only for new posts)
+      if (user && user.identity_status !== "approved") {
+        navigate("/identity-verification");
+        return;
+      }
+      setLoading(false);
     }
 
     AxiosClient.get("/property").then((response) => {
       setProperties(response.data);
-      setLoading(false);
     });
-  }, [user, navigate]);
-  const onSubmit = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
+  }, [user, navigate, searchParams, showToast, t]);
+  const buildPayload = (formData) => {
     const inputs = Object.fromEntries(formData);
-    const payload = {
+    return {
       user_id: user.id,
-      title: inputs["title"],
-      price: parseInt(inputs["price"]),
-      address: inputs.address,
-      description: inputs["des"],
-      city: inputs["city"],
-      bedrooms: parseInt(inputs["bed-num"]),
-      bathrooms: parseInt(inputs["bath-num"]),
-      latitude: lat,
-      longitude: len,
-      type: inputs["type"],
-      porperty_id: parseInt(inputs["prop"]),
-      utilities_policy: inputs["utl-policy"],
+      title: inputs["title"] || null,
+      price: inputs["price"] ? parseInt(inputs["price"]) : null,
+      address: inputs.address || null,
+      description: inputs["des"] || null,
+      city: inputs["city"] || null,
+      bedrooms: inputs["bed-num"] ? parseInt(inputs["bed-num"]) : null,
+      bathrooms: inputs["bath-num"] ? parseInt(inputs["bath-num"]) : null,
+      latitude: lat || null,
+      longitude: len || null,
+      type: inputs["type"] || null,
+      porperty_id: inputs["prop"] ? parseInt(inputs["prop"]) : null,
+      utilities_policy: inputs["utl-policy"] || null,
       pet_policy: inputs["pet-policy"] == "true",
-      income_policy: inputs["income-policy"],
-      total_size: parseInt(inputs["total-size"]),
-      bus: parseInt(inputs["bus"]),
-      resturant: parseInt(inputs["resturant"]),
-      school: parseInt(inputs["school"]),
-      images: avatarURL,
+      income_policy: inputs["income-policy"] || null,
+      total_size: inputs["total-size"] ? parseInt(inputs["total-size"]) : null,
+      bus: inputs["bus"] ? parseInt(inputs["bus"]) : null,
+      resturant: inputs["resturant"] ? parseInt(inputs["resturant"]) : null,
+      school: inputs["school"] ? parseInt(inputs["school"]) : null,
+      images: avatarURL || [],
     };
+  };
+
+  const countFilledFields = (payload) => {
+    let count = 0;
+    const fieldsToCheck = [
+      'title', 'price', 'address', 'description', 'city',
+      'bedrooms', 'bathrooms', 'latitude', 'longitude', 'type',
+      'porperty_id', 'utilities_policy', 'income_policy', 'total_size',
+      'bus', 'resturant', 'school'
+    ];
+    
+    fieldsToCheck.forEach(field => {
+      if (payload[field] !== null && payload[field] !== undefined && payload[field] !== '') {
+        count++;
+      }
+    });
+    
+    // Check images array
+    if (payload.images && Array.isArray(payload.images) && payload.images.length > 0) {
+      count++;
+    }
+    
+    return count;
+  };
+
+  const onSubmit = (e, isDraft = false) => {
+    e.preventDefault();
+    
+    // Get form element - could be from form submit or button click
+    const form = e.target.tagName === 'FORM' ? e.target : e.currentTarget.closest('form') || e.currentTarget.form;
+    
+    if (!form) {
+      setErrors({
+        general: ['Form not found']
+      });
+      return;
+    }
+    
+    const formData = new FormData(form);
+    const payload = {
+      ...buildPayload(formData),
+      is_draft: isDraft,
+    };
+    
     setErrors(null);
-    AxiosClient.post("/post", payload)
+    
+    // For drafts, check if at least 4 fields are filled
+    if (isDraft) {
+      const filledFieldsCount = countFilledFields(payload);
+      if (filledFieldsCount < 4) {
+        setErrors({
+          general: [t('apartments.minFieldsRequired') || 'Please fill at least 4 fields to save as draft']
+        });
+        return;
+      }
+    }
+    const apiCall = isEditing 
+      ? AxiosClient.put(`/post/${postId}`, payload)
+      : AxiosClient.post("/post", payload);
+    
+    apiCall
       .then((response) => {
         console.log(response);
-        navigate("/");
+        if (isEditing) {
+          if (isDraft) {
+            showToast(t("apartments.draftSaved") || "Draft updated successfully", "success");
+          } else {
+            showToast(t("apartments.apartmentUpdated") || "Apartment updated successfully", "success");
+          }
+          navigate("/about");
+        } else {
+          if (isDraft) {
+            showToast(t("apartments.draftSaved"), "success");
+            navigate("/about");
+          } else {
+            showToast(t("apartments.apartmentCreated"), "success");
+            navigate("/");
+          }
+        }
       })
       .catch((error) => {
         if (
@@ -96,7 +200,9 @@ function AddPost() {
       className="px-5 mx-auto max-w-[1366px] max-md:max-w-[640px] max-lg:max-w-[768px] max-xl:max-w-[1280px]
      lg:flex lg:justify-between h-[calc(100vh-100px)] overflow-hidden"
     >
-      <div className="inputs lg:w-3/5 lg:pr-10 flex flex-col gap-12 mb-3 overflow-y-scroll relative">
+      <div className={`inputs lg:w-3/5 flex flex-col gap-12 mb-3 overflow-y-scroll relative ${
+        language === 'ar' ? 'lg:pl-10' : 'lg:pr-10'
+      }`}>
         <h2 className="font-bold text-3xl">{t("addPost.title")}</h2>
         {errors && (
           <div className="bg-red-500 text-white p-3 rounded-md">
@@ -106,7 +212,11 @@ function AddPost() {
           </div>
         )}
         {loading ? (
-          <div className="absolute top-1/2 right-1/2 font-bold text-3xl text-green-600">
+          <div className={`absolute top-1/2 font-bold text-3xl text-green-600 ${
+            language === 'ar' 
+              ? 'left-1/2 -translate-x-1/2' 
+              : 'right-1/2 translate-x-1/2'
+          }`}>
             {t("common.loading")}
           </div>
         ) : (
@@ -122,6 +232,7 @@ function AddPost() {
                 type="text"
                 name="title"
                 id="title"
+                defaultValue={postData?.Title || ""}
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               />
             </div>
@@ -133,6 +244,7 @@ function AddPost() {
                 type="number"
                 name="price"
                 id="price"
+                defaultValue={postData?.Price || ""}
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               />
             </div>
@@ -144,6 +256,7 @@ function AddPost() {
                 type="text"
                 name="address"
                 id="address"
+                defaultValue={postData?.Address || ""}
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               />
             </div>
@@ -154,6 +267,7 @@ function AddPost() {
               <textarea
                 name="des"
                 id="des"
+                defaultValue={postData?.Description || ""}
                 className="h-[200px] w-full border border-black rounded-md resize-none py-5 px-3 outline-none"
               ></textarea>
             </div>
@@ -165,6 +279,7 @@ function AddPost() {
                 type="text"
                 name="city"
                 id="city"
+                defaultValue={postData?.City || ""}
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               />
             </div>
@@ -176,6 +291,7 @@ function AddPost() {
                 type="number"
                 name="bed-num"
                 id="bed-num"
+                defaultValue={postData?.Bedrooms || ""}
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               />
             </div>
@@ -187,6 +303,7 @@ function AddPost() {
                 type="number"
                 name="bath-num"
                 id="bath-num"
+                defaultValue={postData?.Bathrooms || ""}
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               />
             </div>
@@ -228,6 +345,7 @@ function AddPost() {
                 type="text"
                 name="type"
                 id="type"
+                defaultValue={postData?.type || postData?.Type || "rent"}
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               >
                 <option value="rent">{t("search.rent")}</option>
@@ -242,9 +360,10 @@ function AddPost() {
                 type="text"
                 name="prop"
                 id="prop"
+                defaultValue={postData?.porperty_id || ""}
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               >
-                {properties.map((e) => {
+                {properties && properties.map((e) => {
                   return (
                     <option key={e.id} value={e.id}>
                       {e.name}
@@ -261,6 +380,7 @@ function AddPost() {
                 type="text"
                 name="utl-policy"
                 id="utl-policy"
+                defaultValue={postData?.utilities_policy || postData?.Utilities_Policy || "owner"}
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               >
                 <option value="owner">{t("addPost.ownerResponsible")}</option>
@@ -276,6 +396,7 @@ function AddPost() {
                 type="text"
                 name="pet-policy"
                 id="pet-policy"
+                defaultValue={postData?.pet_policy !== undefined ? String(postData.pet_policy) : (postData?.Pet_Policy !== undefined ? String(postData.Pet_Policy) : "false")}
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               >
                 <option value="true">{t("addPost.allowed")}</option>
@@ -290,6 +411,7 @@ function AddPost() {
                 type="number"
                 name="income-policy"
                 id="income-policy"
+                defaultValue={postData?.income_policy || postData?.Income_Policy || ""}
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               />
             </div>
@@ -301,6 +423,7 @@ function AddPost() {
                 type="number"
                 name="total-size"
                 id="total-size"
+                defaultValue={postData?.total_size || postData?.Total_Size || ""}
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               />
             </div>
@@ -312,6 +435,7 @@ function AddPost() {
                 type="number"
                 name="school"
                 id="school"
+                defaultValue={postData?.school || postData?.School || ""}
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               />
             </div>
@@ -323,6 +447,7 @@ function AddPost() {
                 type="number"
                 name="resturant"
                 id="resturant"
+                defaultValue={postData?.resturant || postData?.Resturant || ""}
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               />
             </div>
@@ -334,11 +459,22 @@ function AddPost() {
                 type="number"
                 name="bus"
                 id="bus"
+                defaultValue={postData?.bus || postData?.Bus || ""}
                 className="border border-black outline-none py-5 px-3 rounded-md w-[230px]"
               />
             </div>
-            <button className="bg-green-600 h-[86px] text-white font-semibold rounded-md w-[230px] hover:bg-green-800 transition">
+            <button 
+              type="submit"
+              className="bg-green-600 h-[86px] text-white font-semibold rounded-md w-[230px] hover:bg-green-800 transition"
+            >
               {t("addPost.create")}
+            </button>
+            <button
+              type="button"
+              onClick={(e) => onSubmit(e, true)}
+              className="bg-yellow-300 h-[86px] text-[#444] font-semibold rounded-md w-[230px] hover:bg-yellow-400 transition"
+            >
+              {t("addPost.saveAsDraft")}
             </button>
             <div
               className="bg-green-600 h-[86px] text-white font-semibold rounded-md 

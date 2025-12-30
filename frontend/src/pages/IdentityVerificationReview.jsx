@@ -5,7 +5,7 @@ import { usePopup } from '../contexts/PopupContext';
 
 function IdentityVerificationReview() {
   const { t } = useLanguage();
-  const { showToast } = usePopup();
+  const { showToast, showConfirm } = usePopup();
   const [verifications, setVerifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedVerification, setSelectedVerification] = useState(null);
@@ -117,6 +117,56 @@ function IdentityVerificationReview() {
     }
   };
 
+  const handleRejectAfterApproval = async (id) => {
+    let finalNotes = '';
+    
+    if (selectedRejectionReason && selectedRejectionReason !== 'other') {
+      const reason = rejectionReasons.find(r => r.id === selectedRejectionReason);
+      finalNotes = reason ? `${reason.en} / ${reason.ar}` : '';
+    }
+    
+    if (rejectNotes.trim()) {
+      finalNotes = finalNotes ? `${finalNotes}\n\nAdditional notes: ${rejectNotes}` : rejectNotes;
+    }
+
+    if (!finalNotes.trim() || finalNotes.trim().length < 10) {
+      showToast('Please select a rejection reason or provide a custom reason (minimum 10 characters)', 'warning');
+      return;
+    }
+
+    try {
+      await AxiosClient.post(`/admin/identity-verifications/${id}/reject-after-approval`, {
+        notes: finalNotes,
+      });
+      showToast('Verification approval revoked and rejected.', 'success');
+      fetchVerifications();
+      setSelectedVerification(null);
+      setRejectNotes('');
+      setSelectedRejectionReason('');
+    } catch (error) {
+      showToast('Error rejecting verification: ' + (error.response?.data?.message || error.message), 'error');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const confirmed = await showConfirm(
+      'Delete Verification Record',
+      'Are you sure you want to delete this verification record? This action cannot be undone.',
+      'Delete',
+      'Cancel'
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await AxiosClient.delete(`/admin/identity-verifications/${id}`);
+      showToast('Verification record deleted successfully.', 'success');
+      fetchVerifications();
+    } catch (error) {
+      showToast('Error deleting verification: ' + (error.response?.data?.message || error.message), 'error');
+    }
+  };
+
   const getStatusBadge = (status) => {
     const badges = {
       pending: 'bg-yellow-100 text-yellow-800',
@@ -203,33 +253,75 @@ function IdentityVerificationReview() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <p className="font-semibold mb-2">Front Document:</p>
+                  <p className="font-semibold mb-2">Front Document / المستند الأمامي:</p>
                   {verification.document_front_url ? (
-                    <a
-                      href={verification.document_front_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      View Document
-                    </a>
+                    <div className="border border-gray-300 rounded-md overflow-hidden">
+                      <a
+                        href={verification.document_front_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <img
+                          src={verification.document_front_url}
+                          alt="Front Document"
+                          className="w-full h-auto max-h-64 object-contain bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'block';
+                          }}
+                        />
+                        <div style={{ display: 'none' }} className="p-4 text-center text-gray-500">
+                          <p>Unable to load image</p>
+                          <a
+                            href={verification.document_front_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline mt-2 inline-block"
+                          >
+                            View Document
+                          </a>
+                        </div>
+                      </a>
+                    </div>
                   ) : (
                     <p className="text-gray-500">No document uploaded</p>
                   )}
                 </div>
                 <div>
-                  <p className="font-semibold mb-2">Back Document:</p>
+                  <p className="font-semibold mb-2">Back Document / المستند الخلفي:</p>
                   {verification.document_back_url ? (
-                    <a
-                      href={verification.document_back_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      View Document
-                    </a>
+                    <div className="border border-gray-300 rounded-md overflow-hidden">
+                      <a
+                        href={verification.document_back_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <img
+                          src={verification.document_back_url}
+                          alt="Back Document"
+                          className="w-full h-auto max-h-64 object-contain bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'block';
+                          }}
+                        />
+                        <div style={{ display: 'none' }} className="p-4 text-center text-gray-500">
+                          <p>Unable to load image</p>
+                          <a
+                            href={verification.document_back_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline mt-2 inline-block"
+                          >
+                            View Document
+                          </a>
+                        </div>
+                      </a>
+                    </div>
                   ) : (
                     <p className="text-gray-500">No document uploaded</p>
                   )}
@@ -301,32 +393,54 @@ function IdentityVerificationReview() {
                 </p>
               )}
 
-              {verification.status === 'pending' && (
-                <div className="flex gap-4 mt-4">
+              <div className="flex gap-4 mt-4 flex-wrap">
+                {verification.status === 'pending' && (
+                  <>
+                    <button
+                      onClick={() => handleApprove(verification.id)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => setSelectedVerification({ ...verification, action: 'reject' })}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition"
+                    >
+                      Reject
+                    </button>
+                  </>
+                )}
+                
+                {verification.status === 'approved' && (
                   <button
-                    onClick={() => handleApprove(verification.id)}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition"
+                    onClick={() => setSelectedVerification({ ...verification, action: 'rejectAfterApproval' })}
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md transition"
                   >
-                    Approve
+                    Revoke Approval
                   </button>
-                  <button
-                    onClick={() => setSelectedVerification(verification)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition"
-                  >
-                    Reject
-                  </button>
-                </div>
-              )}
+                )}
+
+                <button
+                  onClick={() => handleDelete(verification.id)}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition"
+                >
+                  Delete Record
+                </button>
+              </div>
             </div>
           ))}
         </div>
       )}
 
       {/* Reject Modal */}
-      {selectedVerification && (
+      {selectedVerification && selectedVerification.action && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-md p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="font-bold text-lg mb-4">Reject Verification / رفض التحقق</h3>
+            <h3 className="font-bold text-lg mb-4">
+              {selectedVerification.action === 'rejectAfterApproval' 
+                ? 'Revoke Approval / إلغاء الموافقة' 
+                : 'Reject Verification / رفض التحقق'}
+            </h3>
             
             <div className="mb-4">
               <label className="block font-semibold text-sm mb-2">
@@ -392,10 +506,18 @@ function IdentityVerificationReview() {
                 Cancel / إلغاء
               </button>
               <button
-                onClick={() => handleReject(selectedVerification.id)}
+                onClick={() => {
+                  if (selectedVerification.action === 'rejectAfterApproval') {
+                    handleRejectAfterApproval(selectedVerification.id);
+                  } else {
+                    handleReject(selectedVerification.id);
+                  }
+                }}
                 className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition"
               >
-                Confirm Reject / تأكيد الرفض
+                {selectedVerification.action === 'rejectAfterApproval' 
+                  ? 'Confirm Revoke / تأكيد الإلغاء' 
+                  : 'Confirm Reject / تأكيد الرفض'}
               </button>
             </div>
           </div>

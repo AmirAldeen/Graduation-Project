@@ -29,12 +29,30 @@ class AdminController extends Controller
     }
 
     /**
-     * Get all users with pagination
+     * Get all users with pagination and search
      */
     public function getUsers(Request $request)
     {
         $perPage = $request->get('per_page', 15);
-        $users = User::select('id', 'name', 'email', 'role', 'status', 'avatar', 'created_at')
+        $search = $request->get('search', '');
+        
+        $query = User::query();
+        
+        // If search term is provided, search in multiple fields
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                // Search in users table
+                $q->where('users.name', 'LIKE', "%{$search}%")
+                  ->orWhere('users.email', 'LIKE', "%{$search}%");
+            })
+            ->orWhereHas('identityVerifications', function($q) use ($search) {
+                // Search in identity_verifications table
+                $q->where('full_name', 'LIKE', "%{$search}%")
+                  ->orWhere('document_number', 'LIKE', "%{$search}%");
+            });
+        }
+        
+        $users = $query->select('id', 'name', 'email', 'role', 'status', 'avatar', 'created_at')
             ->paginate($perPage);
 
         return response()->json($users);
@@ -60,11 +78,19 @@ class AdminController extends Controller
             },
             'reviews' => function ($query) {
                 $query->with(['post:id,Title'])->select('id', 'user_id', 'post_id', 'rating', 'comment', 'status', 'created_at');
+            },
+            'identityVerifications' => function ($query) {
+                $query->select('id', 'user_id', 'document_type', 'document_front_url', 'document_back_url', 'status', 'full_name', 'document_number', 'date_of_birth', 'place_of_birth', 'nationality', 'issue_date', 'expiry_date', 'address', 'admin_notes', 'reviewed_at', 'created_at')
+                      ->orderBy('created_at', 'desc');
             }
         ])->findOrFail($id);
 
+        // Get latest identity verification
+        $latestIdentity = $user->identityVerifications->first();
+
         return response()->json([
             'user' => $user->makeHidden(['password', 'remember_token']),
+            'identity' => $latestIdentity,
             'activities' => [
                 'posts' => $user->post,
                 'contracts' => $user->contracts,

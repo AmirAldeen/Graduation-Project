@@ -1,7 +1,9 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
+import { useLanguage } from '../contexts/LanguageContext';
 
 function GuestLayout() {
+  const { language } = useLanguage();
   return (
     <div
       className="px-5 mx-auto max-w-[1366px] max-md:max-w-[640px] max-lg:max-w-[768px] max-xl:max-w-[1280px] overflow-hidden
@@ -12,7 +14,9 @@ function GuestLayout() {
         <img
           src="/public/bg.png"
           alt=""
-          className="absolute max-w-[115%] right-0 max-xl:max-w-[105%]"
+          className={`absolute max-w-[115%] max-xl:max-w-[105%] ${
+            language === 'ar' ? 'left-0' : 'right-0'
+          }`}
         />
       </div>
     </div>

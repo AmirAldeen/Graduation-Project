@@ -3,18 +3,24 @@ import Searchbar from '../components/Searchbar';
 import { useLanguage } from '../contexts/LanguageContext';
 
 function Home() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   return (
     <>
       <div className="content-container flex-1 gap-5 flex flex-col justify-center max-md:justify-start">
-        <h1 className="max-w-xl text-6xl font-bold lg:pr-14 max-xl:text-5xl">
+        <h1 className={`max-w-xl text-6xl font-bold max-xl:text-5xl ${
+          language === 'ar' ? 'lg:pl-14' : 'lg:pr-14'
+        }`}>
           {t('home.title')}
         </h1>
-        <p className="text-sm lg:pr-24">
+        <p className={`text-sm ${
+          language === 'ar' ? 'lg:pl-24' : 'lg:pr-24'
+        }`}>
           {t('home.description')}
         </p>
         <Searchbar />
-        <div className="boxes flex justify-between pr-24 max-md:hidden">
+        <div className={`boxes flex justify-between max-md:hidden ${
+          language === 'ar' ? 'pl-24' : 'pr-24'
+        }`}>
           <div>
             <h1 className="text-4xl font-bold">16+</h1>
             <h2 className="text-xl font-light">{t('home.yearsExperience')}</h2>

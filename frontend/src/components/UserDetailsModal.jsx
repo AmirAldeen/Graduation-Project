@@ -7,6 +7,7 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
   const [user, setUser] = useState(null);
   const [activities, setActivities] = useState(null);
   const [stats, setStats] = useState(null);
+  const [identity, setIdentity] = useState(null);
   const [activeTab, setActiveTab] = useState('details');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -35,10 +36,12 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
         const userData = response.data.user;
         const activitiesData = response.data.activities;
         const statsData = response.data.stats;
+        const identityData = response.data.identity;
         
         setUser(userData);
         setActivities(activitiesData);
         setStats(statsData);
+        setIdentity(identityData);
         setFormData({
           name: userData.name || '',
           email: userData.email || '',
@@ -135,6 +138,16 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                 }`}
               >
                 {t('admin.details')}
+              </button>
+              <button
+                onClick={() => setActiveTab('identity')}
+                className={`px-4 py-2 font-semibold transition duration-300 ease ${
+                  activeTab === 'identity'
+                    ? 'bg-yellow-300 text-[#444] border-b-2 border-yellow-300'
+                    : 'text-[#888] hover:text-[#444]'
+                }`}
+              >
+                {t('admin.identity')}
               </button>
               <button
                 onClick={() => setActiveTab('activities')}
@@ -268,6 +281,128 @@ function UserDetailsModal({ userId, isOpen, onClose, onUpdate }) {
                   </button>
                 </div>
               </form>
+            )}
+
+            {/* Identity Tab */}
+            {activeTab === 'identity' && (
+              <div className="space-y-6">
+                {identity ? (
+                  <>
+                    <div className="bg-gray-100 rounded-md p-4">
+                      <h3 className="text-lg font-bold text-[#444] mb-4">{t('admin.identityInformation')}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.fullName')}</label>
+                          <p className="text-[#444]">{identity.full_name || '-'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.documentNumber')}</label>
+                          <p className="text-[#444]">{identity.document_number || '-'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.documentType')}</label>
+                          <p className="text-[#444]">{identity.document_type === 'id_card' ? t('admin.idCard') : t('admin.passport')}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.dateOfBirth')}</label>
+                          <p className="text-[#444]">{formatDate(identity.date_of_birth) || '-'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.placeOfBirth')}</label>
+                          <p className="text-[#444]">{identity.place_of_birth || '-'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.nationality')}</label>
+                          <p className="text-[#444]">{identity.nationality || '-'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.issueDate')}</label>
+                          <p className="text-[#444]">{formatDate(identity.issue_date) || '-'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.expiryDate')}</label>
+                          <p className="text-[#444]">{formatDate(identity.expiry_date) || '-'}</p>
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.address')}</label>
+                          <p className="text-[#444]">{identity.address || '-'}</p>
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.status')}</label>
+                          <span className={`px-2 py-1 rounded-md text-sm ${
+                            identity.status === 'approved' ? 'bg-green-200' :
+                            identity.status === 'rejected' ? 'bg-red-200' :
+                            'bg-yellow-200'
+                          }`}>
+                            {translateStatus(identity.status)}
+                          </span>
+                        </div>
+                        {identity.admin_notes && (
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-semibold text-[#888] mb-1">{t('admin.adminNotes')}</label>
+                            <p className="text-[#444] bg-gray-50 p-3 rounded-md">{identity.admin_notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 rounded-md p-4">
+                      <h3 className="text-lg font-bold text-[#444] mb-4">{t('admin.identityDocuments')}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {identity.document_front_url && (
+                          <div>
+                            <label className="block text-sm font-semibold text-[#888] mb-2">{t('admin.frontDocument')}</label>
+                            <img
+                              src={identity.document_front_url}
+                              alt={t('admin.frontDocument')}
+                              className="w-full h-48 object-contain border border-gray-300 rounded-md bg-white"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'block';
+                              }}
+                            />
+                            <a
+                              href={identity.document_front_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline text-sm mt-2 block"
+                              style={{ display: 'none' }}
+                            >
+                              {t('admin.viewDocument')}
+                            </a>
+                          </div>
+                        )}
+                        {identity.document_back_url && (
+                          <div>
+                            <label className="block text-sm font-semibold text-[#888] mb-2">{t('admin.backDocument')}</label>
+                            <img
+                              src={identity.document_back_url}
+                              alt={t('admin.backDocument')}
+                              className="w-full h-48 object-contain border border-gray-300 rounded-md bg-white"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'block';
+                              }}
+                            />
+                            <a
+                              href={identity.document_back_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline text-sm mt-2 block"
+                              style={{ display: 'none' }}
+                            >
+                              {t('admin.viewDocument')}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-[#888]">{t('admin.noIdentityData')}</p>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Activities Tab */}

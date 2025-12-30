@@ -214,4 +214,53 @@ class IdentityVerificationController extends Controller
         ]);
     }
 
+    /**
+     * Admin: Reject verification after approval (revoke approval)
+     */
+    public function rejectAfterApproval(Request $request, $id)
+    {
+        $admin = $request->user();
+        $verification = IdentityVerification::findOrFail($id);
+
+        if ($verification->status !== 'approved') {
+            return response()->json([
+                'message' => 'This verification is not approved. Use the regular reject endpoint.',
+            ], 400);
+        }
+
+        $validated = $request->validate([
+            'notes' => ['required', 'string', 'min:10'],
+        ]);
+
+        $verification->update([
+            'status' => 'rejected',
+            'reviewed_by' => $admin->id,
+            'reviewed_at' => now(),
+            'admin_notes' => $validated['notes'],
+        ]);
+
+        // Update user identity status
+        $verification->user->update(['identity_status' => 'rejected']);
+
+        return response()->json([
+            'message' => 'Identity verification approval revoked and rejected.',
+            'verification' => $verification->load(['user', 'reviewer']),
+        ]);
+    }
+
+    /**
+     * Admin: Delete verification record
+     */
+    public function destroy($id)
+    {
+        $verification = IdentityVerification::findOrFail($id);
+        
+        // Delete the verification record
+        $verification->delete();
+
+        return response()->json([
+            'message' => 'Identity verification record deleted successfully.',
+        ]);
+    }
+
 }

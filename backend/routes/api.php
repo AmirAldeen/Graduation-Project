@@ -65,5 +65,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/identity-verifications/{id}', [IdentityVerificationController::class, 'getDetails']);
     Route::post('/identity-verifications/{id}/approve', [IdentityVerificationController::class, 'approve']);
     Route::post('/identity-verifications/{id}/reject', [IdentityVerificationController::class, 'reject']);
+    Route::post('/identity-verifications/{id}/reject-after-approval', [IdentityVerificationController::class, 'rejectAfterApproval']);
+    Route::delete('/identity-verifications/{id}', [IdentityVerificationController::class, 'destroy']);
 });
 

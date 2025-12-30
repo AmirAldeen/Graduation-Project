@@ -5,6 +5,7 @@ import { useLoaderData, useNavigate } from 'react-router-dom';
 import { useUserContext } from '../contexts/UserContext';
 import { useEffect, useState } from 'react';
 import Notification from '../components/Notification';
+import { useLanguage } from '../contexts/LanguageContext';
 
 function EstateInfo() {
   const postDetails = useLoaderData();
@@ -13,6 +14,7 @@ function EstateInfo() {
   const [isSaved, setIsSaved] = useState(false);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const { language } = useLanguage();
 
   useEffect(() => {
     if (token) {
@@ -65,12 +67,18 @@ function EstateInfo() {
      lg:flex lg:justify-between h-[calc(100vh-100px)] max-lg:overflow-y-scroll"
     >
       {loading ? (
-        <div className="text-3xl text-green-600 font-bold absolute right-1/2 top-1/2">
+        <div className={`text-3xl text-green-600 font-bold absolute top-1/2 ${
+          language === 'ar' 
+            ? 'left-1/2 -translate-x-1/2' 
+            : 'right-1/2 translate-x-1/2'
+        }`}>
           Loading...
         </div>
       ) : (
         <>
-          <div className="lg:w-3/5 lg:pr-14 max-lg:mb-5">
+          <div className={`lg:w-3/5 max-lg:mb-5 ${
+            language === 'ar' ? 'lg:pl-14' : 'lg:pr-14'
+          }`}>
             <Slider images={postDetails.post.images} />
             <div className="flex justify-between items-center">
               <div className="flex flex-col gap-4">

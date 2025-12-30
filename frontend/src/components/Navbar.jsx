@@ -124,18 +124,24 @@ function Navbar() {
               </button>
               
               {profileDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-xl border border-gray-200 z-[10000]">
+                <div className={`absolute top-full mt-2 w-48 bg-white rounded-md shadow-xl border border-gray-200 z-[10000] ${
+                  language === 'ar' ? 'left-0' : 'right-0'
+                }`}>
                   <div className="py-1">
                     <Link
                       to="/user/profile"
                       onClick={() => setProfileDropdown(false)}
-                      className="block px-4 py-2 text-sm text-[#444] hover:bg-yellow-300 transition duration-300 ease"
+                      className={`block px-4 py-2 text-sm text-[#444] hover:bg-yellow-300 transition duration-300 ease ${
+                        language === 'ar' ? 'text-right' : 'text-left'
+                      }`}
                     >
                       {t('navbar.profile')}
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition duration-300 ease"
+                      className={`block w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition duration-300 ease ${
+                        language === 'ar' ? 'text-right' : 'text-left'
+                      }`}
                     >
                       {t('navbar.logout')}
                     </button>
@@ -154,7 +160,9 @@ function Navbar() {
               </Link>
               <Link
                 href="#"
-                className="bg-yellow-300 px-4 py-2 hover:scale-105 mr-2 transition duration-300 ease rounded-md max-md:hidden"
+                className={`bg-yellow-300 px-4 py-2 hover:scale-105 transition duration-300 ease rounded-md max-md:hidden ${
+                  language === 'ar' ? 'ml-2' : 'mr-2'
+                }`}
                 to="/signup"
               >
                 {t('navbar.signup')}
@@ -165,7 +173,9 @@ function Navbar() {
           {/* Language Toggle Button */}
           <button
             onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-            className="bg-yellow-300 hover:scale-105 px-4 py-2 rounded-md font-bold transition duration-300 ease text-[#444] max-md:mr-2"
+            className={`bg-yellow-300 hover:scale-105 px-4 py-2 rounded-md font-bold transition duration-300 ease text-[#444] ${
+              language === 'ar' ? 'max-md:ml-2' : 'max-md:mr-2'
+            }`}
             title={language === 'en' ? 'Switch to Arabic' : 'التبديل إلى الإنجليزية'}
           >
             {language === 'en' ? 'عربي' : 'English'}
@@ -175,7 +185,9 @@ function Navbar() {
             <img
               src="/public/menu.png"
               alt=""
-              className={`w-9 md:hidden relative z-50 ml-4`}
+              className={`w-9 md:hidden relative z-50 ${
+                language === 'ar' ? 'mr-4' : 'ml-4'
+              }`}
               onClick={() => {
                 setSidebar((pre) => !pre);
               }}
@@ -184,7 +196,8 @@ function Navbar() {
         </div>
         <div
           className={`menu bg-black flex flex-col justify-center items-center 
-            absolute  right-0 top-0 bottom-0 gap-6 transition-all duration-1000 md:hidden
+            absolute top-0 bottom-0 gap-6 transition-all duration-1000 md:hidden
+            ${language === 'ar' ? 'left-0' : 'right-0'}
             ${sidebar ? 'max-md:w-1/2' : 'w-0 overflow-hidden'}`}
         >
           {/* <a

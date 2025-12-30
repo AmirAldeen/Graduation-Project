@@ -87,27 +87,6 @@ function ApartmentManagement() {
       render: (value, row) => (row.user ? row.user.name : "N/A"),
     },
     { key: "Address", label: t("admin.address") },
-    {
-      key: "status",
-      label: t("admin.status"),
-      render: (value) => {
-        const statusColors = {
-          active: "bg-green-200",
-          pending: "bg-yellow-200",
-          rented: "bg-blue-200",
-          blocked: "bg-red-200",
-        };
-        return (
-          <span
-            className={`px-2 py-1 rounded-md text-sm ${
-              statusColors[value] || "bg-gray-200"
-            }`}
-          >
-            {translateStatus(value)}
-          </span>
-        );
-      },
-    },
   ];
 
   const handleViewDetails = (post) => {
@@ -134,13 +113,6 @@ function ApartmentManagement() {
         variant: "default",
       },
     ];
-    if (post.status !== "active") {
-      actionButtons.push({
-        label: t("admin.approve"),
-        onClick: () => handleStatusUpdate(post, "active"),
-        variant: "success",
-      });
-    }
     if (post.status !== "blocked") {
       actionButtons.push({
         label: t("admin.block"),

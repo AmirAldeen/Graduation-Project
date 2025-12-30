@@ -8,6 +8,7 @@ use App\Http\Requests\StorepostRequest;
 use App\Http\Requests\UpdatepostRequest;
 use App\Http\Resources\PostResource;
 use App\Models\PostImage;
+use App\Models\Porperty;
 use Illuminate\Http\Request;
 
 class postController extends Controller
@@ -18,6 +19,9 @@ class postController extends Controller
     public function index(Request $request)
     {
         $query = Post::query();
+
+        // Exclude draft posts from public listings
+        $query->where("status", "!=", "draft");
 
         if($request->has("location") && !empty($request->location))
             $query->where("City",$request->location);
@@ -56,9 +60,41 @@ class postController extends Controller
             ], 401);
         }
         
-        // Check identity verification status - CRITICAL SECURITY CHECK
-        // Check identity_status directly from users table (identityVerifications is a HasMany relationship)
-        if ($user->identity_status !== 'approved') {
+        // Determine if this is a draft save
+        $isDraft = $request->input('is_draft', false);
+        
+        // For drafts, check if at least 4 fields are filled
+        if ($isDraft) {
+            $filledFields = 0;
+            $fieldsToCheck = [
+                'title', 'price', 'address', 'description', 'city',
+                'bedrooms', 'bathrooms', 'latitude', 'longitude', 'type',
+                'porperty_id', 'utilities_policy', 'income_policy', 'total_size',
+                'bus', 'resturant', 'school'
+            ];
+            
+            foreach ($fieldsToCheck as $field) {
+                $value = $request->input($field);
+                if ($value !== null && $value !== '' && $value !== 0) {
+                    $filledFields++;
+                }
+            }
+            
+            // Check images
+            if ($request->has('images') && is_array($request->input('images')) && count($request->input('images')) > 0) {
+                $filledFields++;
+            }
+            
+            if ($filledFields < 4) {
+                return response()->json([
+                    'message' => 'Please fill at least 4 fields to save as draft.',
+                ], 422);
+            }
+        }
+        
+        // For drafts, skip identity verification check
+        // For published posts, check identity verification status
+        if (!$isDraft && $user->identity_status !== 'approved') {
             return response()->json([
                 'message' => 'Identity verification required. Please submit your identity documents for verification before creating posts.',
                 'identity_status' => $user->identity_status ?? 'none',
@@ -66,27 +102,39 @@ class postController extends Controller
         }
 
         $data = $request->validated();
-        $post = Post::create([
-            'user_id' => $user->id, // Use authenticated user's ID for security
-            'porperty_id' => $request->porperty_id,
-            'Title' => $request->title,
-            'Description' => $request->description,
-            'Type' => $request->type,
-            'Price' => $request->price,
-            'Bedrooms' => $request->bedrooms,
-            'Bathrooms' => $request->bathrooms,
-            'Total_Size' => $request->total_size,
-            'School' => $request->school,
-            'Resturant' => $request->resturant,
-            'Bus' => $request->bus,
-            'City' => $request->city,
-            'Address' => $request->address,
-            'Latitude' => $request->latitude,
-            'Longitude' => $request->longitude,
-            'Pet_Policy' => $request->pet_policy,
-            'Utilities_Policy' => $request->utilities_policy,
-            'Income_Policy' => $request->income_policy,
-        ]);
+        
+        // For drafts, use default values for required fields that are not filled
+        // Get default property if not provided
+        $defaultPropertyId = $request->porperty_id;
+        if (!$defaultPropertyId) {
+            $firstProperty = Porperty::first();
+            $defaultPropertyId = $firstProperty ? $firstProperty->id : 1;
+        }
+        
+        $postData = [
+            'user_id' => $user->id,
+            'status' => $isDraft ? 'draft' : 'pending',
+            'Title' => $request->title ?? 'Draft',
+            'Price' => $request->price ?? 0,
+            'Address' => $request->address ?? 'Not specified',
+            'Description' => $request->description ?? 'Draft post',
+            'City' => $request->city ?? 'Not specified',
+            'Bedrooms' => $request->bedrooms ?? 0,
+            'Bathrooms' => $request->bathrooms ?? 0,
+            'Latitude' => $request->latitude ?? '0',
+            'Longitude' => $request->longitude ?? '0',
+            'Type' => $request->type ?? 'rent',
+            'porperty_id' => $defaultPropertyId,
+            'Utilities_Policy' => $request->utilities_policy ?? 'owner',
+            'Pet_Policy' => $request->has('pet_policy') ? (bool)$request->pet_policy : false,
+            'Income_Policy' => $request->income_policy ?? 'Not specified',
+            'Total_Size' => $request->total_size ?? 0,
+            'Bus' => $request->bus ?? 0,
+            'Resturant' => $request->resturant ?? 0,
+            'School' => $request->school ?? 0,
+        ];
+        
+        $post = Post::create($postData);
 
         if (!empty($request["images"]) && is_array($request["images"])) {
             $images = collect($request["images"])->map(function($url) use ($post) {
@@ -119,15 +167,150 @@ class postController extends Controller
      */
     public function update(UpdatepostRequest $request, post $post)
     {
-        //
+        // Get authenticated user
+        $user = $request->user();
+        
+        // Security check: Ensure user is authenticated
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthorized. Please log in to update posts.',
+            ], 401);
+        }
+        
+        // Check if user owns the post
+        if ($post->user_id !== $user->id && $user->role !== 'admin') {
+            return response()->json([
+                'message' => 'You can only update your own posts.',
+            ], 403);
+        }
+        
+        // Determine if this is a draft save
+        $isDraft = $request->input('is_draft', false);
+        
+        // For drafts, check if at least 4 fields are filled
+        if ($isDraft) {
+            $filledFields = 0;
+            $fieldsToCheck = [
+                'title', 'price', 'address', 'description', 'city',
+                'bedrooms', 'bathrooms', 'latitude', 'longitude', 'type',
+                'porperty_id', 'utilities_policy', 'income_policy', 'total_size',
+                'bus', 'resturant', 'school'
+            ];
+            
+            foreach ($fieldsToCheck as $field) {
+                $value = $request->input($field);
+                if ($value !== null && $value !== '' && $value !== 0) {
+                    $filledFields++;
+                }
+            }
+            
+            // Check images
+            if ($request->has('images') && is_array($request->input('images')) && count($request->input('images')) > 0) {
+                $filledFields++;
+            }
+            
+            if ($filledFields < 4) {
+                return response()->json([
+                    'message' => 'Please fill at least 4 fields to save as draft.',
+                ], 422);
+            }
+        }
+        
+        // For published posts, check identity verification status (if changing from draft)
+        if (!$isDraft && $post->status === 'draft' && $user->identity_status !== 'approved') {
+            return response()->json([
+                'message' => 'Identity verification required. Please submit your identity documents for verification before publishing posts.',
+                'identity_status' => $user->identity_status ?? 'none',
+            ], 403);
+        }
+        
+        $data = $request->validated();
+        
+        // Get default property if not provided
+        $defaultPropertyId = $request->porperty_id ?? $post->porperty_id;
+        if (!$defaultPropertyId) {
+            $firstProperty = Porperty::first();
+            $defaultPropertyId = $firstProperty ? $firstProperty->id : 1;
+        }
+        
+        // Update post data
+        $post->update([
+            'Title' => $request->title ?? $post->Title,
+            'Price' => $request->price ?? $post->Price,
+            'Address' => $request->address ?? $post->Address,
+            'Description' => $request->description ?? $post->Description,
+            'City' => $request->city ?? $post->City,
+            'Bedrooms' => $request->bedrooms ?? $post->Bedrooms,
+            'Bathrooms' => $request->bathrooms ?? $post->Bathrooms,
+            'Latitude' => $request->latitude ?? $post->Latitude,
+            'Longitude' => $request->longitude ?? $post->Longitude,
+            'Type' => $request->type ?? $post->Type,
+            'porperty_id' => $defaultPropertyId,
+            'Utilities_Policy' => $request->utilities_policy ?? $post->Utilities_Policy,
+            'Pet_Policy' => $request->has('pet_policy') ? (bool)$request->pet_policy : $post->Pet_Policy,
+            'Income_Policy' => $request->income_policy ?? $post->Income_Policy,
+            'Total_Size' => $request->total_size ?? $post->Total_Size,
+            'Bus' => $request->bus ?? $post->Bus,
+            'Resturant' => $request->resturant ?? $post->Resturant,
+            'School' => $request->school ?? $post->School,
+            'status' => $isDraft ? 'draft' : ($post->status === 'draft' ? 'pending' : $post->status),
+        ]);
+        
+        // Update images if provided
+        if ($request->has('images') && is_array($request->input('images'))) {
+            // Delete old images
+            PostImage::where('post_id', $post->id)->delete();
+            
+            // Insert new images
+            $images = collect($request->input('images'))->map(function($url) use ($post) {
+                return [
+                    "Image_URL" => $url,
+                    "post_id" => $post->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            })->toArray();
+            
+            if (!empty($images)) {
+                PostImage::insert($images);
+            }
+        }
+        
+        $post = $post->fresh()->load('postimage');
+        
+        return response(new PostResource($post), 200);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(post $post)
+    public function destroy(Request $request, post $post)
     {
-        //
+        $user = $request->user();
+        
+        // Security check: Only the owner or admin can delete
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthorized.',
+            ], 401);
+        }
+        
+        // Check if user owns the post or is admin
+        if ($post->user_id !== $user->id && $user->role !== 'admin') {
+            return response()->json([
+                'message' => 'You can only delete your own posts.',
+            ], 403);
+        }
+        
+        // Delete associated images first
+        PostImage::where('post_id', $post->id)->delete();
+        
+        // Delete the post
+        $post->delete();
+        
+        return response()->json([
+            'message' => 'Post deleted successfully.',
+        ], 200);
     }
 
 

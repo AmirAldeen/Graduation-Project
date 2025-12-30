@@ -56,7 +56,7 @@ class userController extends Controller
     }
     public function getUserPosts($id)
     {
-        $posts = Post::where("user_id",$id)->get();
+        $posts = Post::with('postimage')->where("user_id",$id)->get();
         return response(PostResource::collection($posts),200);
     }
 }
