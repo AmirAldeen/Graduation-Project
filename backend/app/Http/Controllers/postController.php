@@ -20,8 +20,9 @@ class postController extends Controller
     {
         $query = Post::query();
 
-        // Exclude draft posts from public listings
-        $query->where("status", "!=", "draft");
+        // Exclude draft and rented posts from public listings
+        $query->where("status", "!=", "draft")
+              ->where("status", "!=", "rented");
 
         if($request->has("location") && !empty($request->location))
             $query->where("City",$request->location);

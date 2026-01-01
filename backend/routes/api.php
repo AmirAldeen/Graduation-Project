@@ -34,6 +34,36 @@ Route::middleware("auth:sanctum")->group(function () {
         Route::get("/saved-posts/{id}",[SavedPostController::class,"index"]);
 
         Route::delete("/saved-posts",[SavedPostController::class,"destroy"]);
+        
+        // Booking Requests
+        Route::post("/booking-requests",[App\Http\Controllers\BookingController::class,"store"]);
+        Route::get("/booking-requests/my-requests",[App\Http\Controllers\BookingController::class,"myRequests"]);
+        Route::get("/booking-requests/received",[App\Http\Controllers\BookingController::class,"receivedRequests"]);
+        Route::post("/booking-requests/{id}/approve",[App\Http\Controllers\BookingController::class,"approve"]);
+        Route::post("/booking-requests/{id}/reject",[App\Http\Controllers\BookingController::class,"reject"]);
+        Route::post("/booking-requests/{id}/cancel",[App\Http\Controllers\BookingController::class,"cancel"]);
+        Route::delete("/booking-requests/{id}",[App\Http\Controllers\BookingController::class,"destroy"]);
+        
+        // Payments
+        Route::post("/payments",[App\Http\Controllers\PaymentController::class,"store"]);
+        Route::post("/payments/{id}/confirm",[App\Http\Controllers\PaymentController::class,"confirm"]);
+        
+        // Contracts
+        Route::get("/contracts",[App\Http\Controllers\ContractController::class,"index"]);
+        Route::get("/contracts/{id}",[App\Http\Controllers\ContractController::class,"show"]);
+        Route::get("/contracts/{id}/pdf",[App\Http\Controllers\ContractController::class,"downloadPdf"]);
+        Route::put("/contracts/{id}",[App\Http\Controllers\ContractController::class,"update"]);
+        Route::post("/contracts/{id}/sign",[App\Http\Controllers\ContractController::class,"sign"]);
+        Route::post("/contracts/{id}/confirm-payment",[App\Http\Controllers\ContractController::class,"confirmPayment"]);
+        Route::delete("/contracts/{id}",[App\Http\Controllers\ContractController::class,"destroy"]);
+        
+        // Notifications
+        Route::get("/notifications",[App\Http\Controllers\NotificationController::class,"index"]);
+        Route::get("/notifications/unread-count",[App\Http\Controllers\NotificationController::class,"unreadCount"]);
+        Route::post("/notifications/{id}/read",[App\Http\Controllers\NotificationController::class,"markAsRead"]);
+        Route::post("/notifications/read-all",[App\Http\Controllers\NotificationController::class,"markAllAsRead"]);
+        Route::delete("/notifications/{id}",[App\Http\Controllers\NotificationController::class,"destroy"]);
+        Route::delete("/notifications",[App\Http\Controllers\NotificationController::class,"deleteAll"]);
 
 }
 );
@@ -52,8 +82,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::delete('/posts/{id}', [AdminController::class, 'deletePost']);
     Route::get('/rental-requests', [AdminController::class, 'getRentalRequests']);
     Route::patch('/rental-requests/{id}/status', [AdminController::class, 'updateRentalRequestStatus']);
+    Route::delete('/rental-requests/{id}', [AdminController::class, 'deleteRentalRequest']);
     Route::get('/contracts', [AdminController::class, 'getContracts']);
     Route::patch('/contracts/{id}/status', [AdminController::class, 'updateContractStatus']);
+    Route::delete('/contracts/{id}', [AdminController::class, 'deleteContract']);
     Route::get('/reviews', [AdminController::class, 'getReviews']);
     Route::delete('/reviews/{id}', [AdminController::class, 'deleteReview']);
     Route::get('/notifications', [AdminController::class, 'getNotifications']);

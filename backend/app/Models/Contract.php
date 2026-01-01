@@ -9,6 +9,7 @@ class Contract extends Model
 {
     protected $fillable = [
         'rental_request_id',
+        'payment_id',
         'user_id',
         'post_id',
         'start_date',
@@ -16,12 +17,24 @@ class Contract extends Model
         'monthly_rent',
         'status',
         'terms',
+        'owner_signature',
+        'renter_signature',
+        'owner_signed_at',
+        'renter_signed_at',
+        'payment_confirmed_by_owner',
+        'payment_confirmed_at',
+        'cancelled_by_admin',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
         'monthly_rent' => 'decimal:2',
+        'owner_signed_at' => 'datetime',
+        'renter_signed_at' => 'datetime',
+        'payment_confirmed_by_owner' => 'boolean',
+        'payment_confirmed_at' => 'datetime',
+        'cancelled_by_admin' => 'boolean',
     ];
 
     public function rentalRequest(): BelongsTo
@@ -37,5 +50,10 @@ class Contract extends Model
     public function post(): BelongsTo
     {
         return $this->belongsTo(Post::class);
+    }
+
+    public function payment(): BelongsTo
+    {
+        return $this->belongsTo(Payment::class);
     }
 }

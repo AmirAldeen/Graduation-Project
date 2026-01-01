@@ -1,18 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AdminTable from '../components/AdminTable';
 import AxiosClient from '../AxiosClient';
 import { useUserContext } from '../contexts/UserContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { usePopup } from '../contexts/PopupContext';
 
 function ContractManagement() {
   const { t, translateStatus } = useLanguage();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const { setMessage } = useUserContext();
+  const { showConfirm } = usePopup();
+  const highlightedId = searchParams.get('contractId');
 
   useEffect(() => {
     fetchContracts();
   }, []);
+
+  useEffect(() => {
+    if (highlightedId && contracts.length > 0) {
+      setTimeout(() => {
+        const element = document.getElementById(`row-${highlightedId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    }
+  }, [highlightedId, contracts]);
 
   const fetchContracts = () => {
     setLoading(true);
@@ -86,6 +103,34 @@ function ContractManagement() {
     },
   ];
 
+  const handleDelete = async (contract) => {
+    const confirmed = await showConfirm({
+      title: t('admin.delete') + ' ' + t('admin.contracts'),
+      message: `${t('admin.delete')} ${t('admin.contracts')}? ${t('admin.confirmDelete') || 'This action cannot be undone.'}`,
+      confirmText: t('admin.delete'),
+      cancelText: t('admin.cancel'),
+      variant: 'danger',
+    });
+
+    if (confirmed) {
+      AxiosClient.delete(`/admin/contracts/${contract.id}`)
+        .then(() => {
+          setMessage(
+            t('admin.contracts') +
+              ' ' +
+              t('admin.deleted') +
+              ' ' +
+              t('common.success')
+          );
+          fetchContracts();
+        })
+        .catch((error) => {
+          console.error('Error deleting contract:', error);
+          setMessage(t('admin.errorDeletingContract') || 'Error deleting contract', 'error');
+        });
+    }
+  };
+
   const actions = (contract) => {
     const actionButtons = [];
     if (contract.status === 'active') {
@@ -95,13 +140,29 @@ function ContractManagement() {
         variant: 'danger',
       });
     }
+    actionButtons.push({
+      label: t('admin.delete'),
+      onClick: () => handleDelete(contract),
+      variant: 'danger',
+    });
     return actionButtons;
+  };
+
+  const handleRowClick = (contract) => {
+    navigate(`/contracts/${contract.id}`);
   };
 
   return (
     <div className="px-5 mx-auto max-w-[1366px]">
       <h1 className="text-3xl font-bold text-[#444] mb-8">{t('admin.contracts')}</h1>
-      <AdminTable columns={columns} data={contracts} actions={actions} loading={loading} />
+      <AdminTable 
+        columns={columns} 
+        data={contracts} 
+        actions={actions} 
+        loading={loading}
+        onRowClick={handleRowClick}
+        highlightedRowId={highlightedId}
+      />
     </div>
   );
 }

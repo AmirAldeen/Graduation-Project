@@ -5,20 +5,30 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class RentalRequest extends Model
+class Payment extends Model
 {
     protected $fillable = [
+        'rental_request_id',
         'user_id',
         'post_id',
+        'amount',
         'status',
-        'message',
-        'requested_at',
-        'hidden_by_user_id',
+        'payment_method',
+        'transaction_id',
+        'payment_details',
+        'paid_at',
     ];
 
     protected $casts = [
-        'requested_at' => 'datetime',
+        'amount' => 'decimal:2',
+        'payment_details' => 'array',
+        'paid_at' => 'datetime',
     ];
+
+    public function rentalRequest(): BelongsTo
+    {
+        return $this->belongsTo(RentalRequest::class);
+    }
 
     public function user(): BelongsTo
     {
@@ -28,10 +38,5 @@ class RentalRequest extends Model
     public function post(): BelongsTo
     {
         return $this->belongsTo(Post::class);
-    }
-
-    public function contract(): \Illuminate\Database\Eloquent\Relations\HasOne
-    {
-        return $this->hasOne(Contract::class);
     }
 }

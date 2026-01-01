@@ -6,15 +6,18 @@ import { useUserContext } from '../contexts/UserContext';
 import { useEffect, useState } from 'react';
 import Notification from '../components/Notification';
 import { useLanguage } from '../contexts/LanguageContext';
+import { usePopup } from '../contexts/PopupContext';
 
 function EstateInfo() {
   const postDetails = useLoaderData();
   const { token, user, setMessage, message, setMessageStatus, messageStatus } =
     useUserContext();
   const [isSaved, setIsSaved] = useState(false);
+  const [bookingRequested, setBookingRequested] = useState(false);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
+  const { showToast, showConfirm } = usePopup();
 
   useEffect(() => {
     if (token) {
@@ -58,6 +61,44 @@ function EstateInfo() {
             setMessageStatus(false);
             setMessage(error.response.data.message);
           }
+        });
+    }
+  };
+
+  const handleRequestBooking = async () => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    // Check if user owns the apartment
+    if (user.id === postDetails.post.user_id) {
+      showToast(t('booking.cannotBookOwn') || "You can't book your own apartment", 'error');
+      return;
+    }
+
+    const confirmed = await showConfirm({
+      title: t('booking.requestBooking') || 'Request Booking',
+      message: t('booking.confirmRequest') || `Are you sure you want to request booking for ${postDetails.post.Title}?`,
+      confirmText: t('booking.request') || 'Request',
+      cancelText: t('admin.cancel') || 'Cancel',
+    });
+
+    if (confirmed) {
+      setLoading(true);
+      AxiosClient.post('/booking-requests', {
+        post_id: postDetails.post.id,
+        message: '',
+      })
+        .then(() => {
+          showToast(t('booking.requestSubmitted') || 'Booking request submitted successfully', 'success');
+          setBookingRequested(true);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error('Error submitting booking request:', error);
+          showToast(error.response?.data?.message || t('booking.errorSubmitting') || 'Error submitting request', 'error');
+          setLoading(false);
         });
     }
   };
@@ -188,21 +229,40 @@ function EstateInfo() {
                 <Map data={[postDetails.post]} />
               </div>
 
-              <div className="buttons flex justify-between items-center gap-3">
-                <div className="border p-4 flex gap-2 bg-white items-center cursor-pointer border-[#fece51] rounded-md">
-                  <img src="/public/chat.png" alt="" className="w-4" />
-                  <span className="font-semibold text-sm">Send a Message</span>
-                </div>
-                <div
-                  className={`border p-4 flex gap-2 ${
-                    isSaved ? 'bg-green-500 text-white' : 'bg-white'
-                  }  items-center cursor-pointer border-[#fece51] rounded-md`}
-                  onClick={handleSave}
-                >
-                  <img src="/public/save.png" alt="" className="w-4" />
-                  <span className="font-semibold text-sm">
-                    {isSaved ? 'Saved' : 'Save the Place'}
-                  </span>
+              <div className="buttons flex flex-col gap-3">
+                {user && user.id !== postDetails.post.user_id && postDetails.post.status !== 'rented' && (
+                  <button
+                    onClick={handleRequestBooking}
+                    disabled={loading || bookingRequested}
+                    className={`w-full p-4 flex gap-2 items-center justify-center cursor-pointer rounded-md transition ${
+                      bookingRequested 
+                        ? 'bg-green-500 text-white' 
+                        : 'bg-yellow-300 hover:bg-yellow-400 text-[#444]'
+                    } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <span className="font-semibold text-sm">
+                      {bookingRequested 
+                        ? (t('booking.requested') || 'Request Submitted') 
+                        : (t('booking.requestBooking') || 'Request Booking')}
+                    </span>
+                  </button>
+                )}
+                <div className="flex justify-between items-center gap-3">
+                  <div className="border p-4 flex gap-2 bg-white items-center cursor-pointer border-[#fece51] rounded-md">
+                    <img src="/public/chat.png" alt="" className="w-4" />
+                    <span className="font-semibold text-sm">Send a Message</span>
+                  </div>
+                  <div
+                    className={`border p-4 flex gap-2 ${
+                      isSaved ? 'bg-green-500 text-white' : 'bg-white'
+                    }  items-center cursor-pointer border-[#fece51] rounded-md`}
+                    onClick={handleSave}
+                  >
+                    <img src="/public/save.png" alt="" className="w-4" />
+                    <span className="font-semibold text-sm">
+                      {isSaved ? 'Saved' : 'Save the Place'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

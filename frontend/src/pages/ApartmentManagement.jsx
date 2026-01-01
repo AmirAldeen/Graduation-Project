@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import AdminTable from "../components/AdminTable";
 import PostDetailsModal from "../components/PostDetailsModal";
 import AxiosClient from "../AxiosClient";
@@ -8,6 +9,7 @@ import { usePopup } from "../contexts/PopupContext";
 
 function ApartmentManagement() {
   const { t, translateStatus } = useLanguage();
+  const [searchParams] = useSearchParams();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState(null);
@@ -15,10 +17,22 @@ function ApartmentManagement() {
   const [isEditMode, setIsEditMode] = useState(false);
   const { setMessage } = useUserContext();
   const { showConfirm } = usePopup();
+  const highlightedId = searchParams.get('postId');
 
   useEffect(() => {
     fetchPosts();
   }, []);
+
+  useEffect(() => {
+    if (highlightedId && posts.length > 0) {
+      setTimeout(() => {
+        const element = document.getElementById(`row-${highlightedId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    }
+  }, [highlightedId, posts]);
 
   const fetchPosts = () => {
     setLoading(true);
@@ -148,6 +162,7 @@ function ApartmentManagement() {
         data={posts}
         actions={actions}
         loading={loading}
+        highlightedRowId={highlightedId}
       />
       {isModalOpen && selectedPost && (
         <PostDetailsModal

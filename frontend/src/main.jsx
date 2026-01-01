@@ -8,17 +8,20 @@ import UserContextProvider from './contexts/UserContext.jsx';
 import PostContextProvider from './contexts/PostContext.jsx';
 import LanguageProvider from './contexts/LanguageContext.jsx';
 import { PopupProvider } from './contexts/PopupContext.jsx';
+import DarkModeProvider from './contexts/DarkModeContext.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <LanguageProvider>
-      <UserContextProvider>
-        <PostContextProvider>
-          <PopupProvider>
-            <RouterProvider router={route} />
-          </PopupProvider>
-        </PostContextProvider>
-      </UserContextProvider>
-    </LanguageProvider>
+    <DarkModeProvider>
+      <LanguageProvider>
+        <UserContextProvider>
+          <PostContextProvider>
+            <PopupProvider>
+              <RouterProvider router={route} />
+            </PopupProvider>
+          </PostContextProvider>
+        </UserContextProvider>
+      </LanguageProvider>
+    </DarkModeProvider>
   </StrictMode>
 );

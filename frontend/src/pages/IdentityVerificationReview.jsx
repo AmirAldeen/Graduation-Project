@@ -258,16 +258,14 @@ function IdentityVerificationReview() {
                   <p className="font-semibold mb-2">Front Document / المستند الأمامي:</p>
                   {verification.document_front_url ? (
                     <div className="border border-gray-300 rounded-md overflow-hidden">
-                      <a
-                        href={verification.document_front_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block"
+                      <div
+                        onClick={() => window.open(verification.document_front_url, '_blank', 'noopener,noreferrer')}
+                        className="block cursor-pointer"
                       >
                         <img
                           src={verification.document_front_url}
                           alt="Front Document"
-                          className="w-full h-auto max-h-64 object-contain bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
+                          className="w-full h-auto max-h-64 object-contain bg-gray-50 hover:opacity-90 transition-opacity"
                           onError={(e) => {
                             e.target.style.display = 'none';
                             e.target.nextSibling.style.display = 'block';
@@ -275,16 +273,17 @@ function IdentityVerificationReview() {
                         />
                         <div style={{ display: 'none' }} className="p-4 text-center text-gray-500">
                           <p>Unable to load image</p>
-                          <a
-                            href={verification.document_front_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline mt-2 inline-block"
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(verification.document_front_url, '_blank', 'noopener,noreferrer');
+                            }}
+                            className="text-blue-600 hover:underline mt-2 inline-block bg-transparent border-none cursor-pointer"
                           >
                             View Document
-                          </a>
+                          </button>
                         </div>
-                      </a>
+                      </div>
                     </div>
                   ) : (
                     <p className="text-gray-500">No document uploaded</p>
@@ -294,16 +293,14 @@ function IdentityVerificationReview() {
                   <p className="font-semibold mb-2">Back Document / المستند الخلفي:</p>
                   {verification.document_back_url ? (
                     <div className="border border-gray-300 rounded-md overflow-hidden">
-                      <a
-                        href={verification.document_back_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block"
+                      <div
+                        onClick={() => window.open(verification.document_back_url, '_blank', 'noopener,noreferrer')}
+                        className="block cursor-pointer"
                       >
                         <img
                           src={verification.document_back_url}
                           alt="Back Document"
-                          className="w-full h-auto max-h-64 object-contain bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
+                          className="w-full h-auto max-h-64 object-contain bg-gray-50 hover:opacity-90 transition-opacity"
                           onError={(e) => {
                             e.target.style.display = 'none';
                             e.target.nextSibling.style.display = 'block';
@@ -311,16 +308,17 @@ function IdentityVerificationReview() {
                         />
                         <div style={{ display: 'none' }} className="p-4 text-center text-gray-500">
                           <p>Unable to load image</p>
-                          <a
-                            href={verification.document_back_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline mt-2 inline-block"
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(verification.document_back_url, '_blank', 'noopener,noreferrer');
+                            }}
+                            className="text-blue-600 hover:underline mt-2 inline-block bg-transparent border-none cursor-pointer"
                           >
                             View Document
-                          </a>
+                          </button>
                         </div>
-                      </a>
+                      </div>
                     </div>
                   ) : (
                     <p className="text-gray-500">No document uploaded</p>
