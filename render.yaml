@@ -65,8 +65,9 @@ services:
       - key: IMAGEKIT_URL_ENDPOINT
         sync: false
 
-  - type: static
+  - type: web
     name: graduation-project-frontend
+    env: static
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: ./frontend/dist
     envVars:
