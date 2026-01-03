@@ -67,9 +67,9 @@ services:
 
   - type: web
     name: graduation-project-frontend
-    env: static
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: ./frontend/dist
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npx serve -s dist -l $PORT
     envVars:
       - key: VITE_BASE_API_URL
         fromService:
